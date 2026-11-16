@@ -209,7 +209,7 @@ button.wk:hover svg{filter:drop-shadow(0 0 4px #fff)}
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='v0.5';
+const VERSION='v0.5.1';
 /* ===================== 게임 데이터 ===================== */
 const WORKERS = 12;
 const GOODS = ['E','F','crystal','pearl','chip','core'];
@@ -1101,6 +1101,9 @@ function caLabel(k,types){
 
 /* ===================== 네트워크(PeerJS) ===================== */
 const PREFIX='ksi-galaxy-trade-';
+const PEER_OPTS={config:{iceServers:[
+  {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']},
+  {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}]}};
 let peer=null, conns=new Set(), netStatus='연결 준비 중…', bTimer=null;
 function onlineTeams(){ const s=new Set(); conns.forEach(c=>{ if(c.open&&c.teamId) s.add(c.teamId); }); return s; }
 function commit(){
@@ -1121,8 +1124,10 @@ function startHost(){
 }
 function openPeer(){
   if(typeof Peer==='undefined'){ netStatus='⚠ 연결 모듈을 불러오지 못했습니다. 한 화면 테스트만 가능합니다.'; boardView(); return; }
-  peer=new Peer(PREFIX+S.code);
-  peer.on('open',()=>{ netStatus='🟢 학생 접속 가능'; boardView(); });
+  peer=new Peer(PREFIX+S.code,PEER_OPTS);
+  netStatus='🟡 연결 서버에 접속하는 중…';
+  const hostWatch=setTimeout(()=>{ if(!peer.open){ netStatus='⚠ 연결 서버에 접속하지 못했습니다. 이 컴퓨터의 인터넷이나 학교 방화벽을 확인하세요.'; boardView(); } },10000);
+  peer.on('open',()=>{ clearTimeout(hostWatch); netStatus='🟢 학생 접속 가능'; boardView(); });
   peer.on('error',err=>{
     if(err.type==='unavailable-id'){ S.code=String(Math.floor(1000+Math.random()*9000)); peer.destroy(); commit(); openPeer(); return; }
     netStatus='⚠ 연결 오류('+err.type+'). 한 화면 테스트는 계속 쓸 수 있습니다.'; boardView();
@@ -1166,25 +1171,39 @@ function joinView(msg){
     connect(code,team);
   };
 }
+function setJoinMsg(t,bad){ const m=$('#j-msg'); if(m){ m.textContent=t; m.className='small '+(bad?'down':'muted'); } }
 function connect(code,team){
   cl.code=code; cl.team=team;
-  $('#j-msg')&&($('#j-msg').textContent='연결 중…');
-  if(typeof Peer==='undefined'){ joinView('연결 모듈을 불러오지 못했습니다. 인터넷 연결을 확인하세요.'); return; }
+  if(typeof Peer==='undefined'){ joinView('연결 모듈을 불러오지 못했습니다. 이 기기의 인터넷 연결을 확인하세요.'); return; }
   if(cl.peer){ try{cl.peer.destroy();}catch(e){} }
-  cl.peer=new Peer();
-  const fail=setTimeout(()=>{ if(!cl.st) joinView('방을 찾지 못했습니다. 방 코드를 확인하세요.'); },12000);
-  cl.peer.on('open',()=>{
-    const c=cl.peer.connect(PREFIX+code,{reliable:true}); cl.conn=c;
-    c.on('open',()=>c.send({type:'join',team}));
+  const p=new Peer(PEER_OPTS); cl.peer=p;
+  let stage='server', timer=null, done=false;
+  setJoinMsg('① 연결 서버에 접속하는 중…');
+  const fail=msg=>{
+    if(done) return; done=true; clearTimeout(timer);
+    try{p.destroy();}catch(e){}
+    if(cl.st){ toast(msg+' 다시 시도합니다…','bad'); setTimeout(()=>connect(cl.code,cl.team),4000); }
+    else joinView(msg);
+  };
+  timer=setTimeout(()=>fail('① 연결 서버에 접속하지 못했습니다. 이 기기의 인터넷이 막혀 있을 수 있습니다. 학교 와이파이라면 휴대폰 데이터로도 시도해 보세요.'),10000);
+  p.on('open',()=>{
+    stage='room'; clearTimeout(timer);
+    setJoinMsg('② 방 '+code+'을(를) 찾아 연결하는 중…');
+    const c=p.connect(PREFIX+code,{reliable:true}); cl.conn=c;
+    timer=setTimeout(()=>fail('③ 방 '+code+'은(는) 찾았지만 전광판과 이 기기가 연결되지 못했습니다. 학교 와이파이가 기기끼리의 연결을 막고 있을 수 있습니다. 선생님께 이 화면을 보여 주세요.'),20000);
+    c.on('iceStateChanged',st=>{ if(st==='failed') fail('③ 방 '+code+'은(는) 찾았지만 네트워크가 연결을 막았습니다. 학교 와이파이가 기기끼리의 연결을 막고 있을 수 있습니다. 선생님께 이 화면을 보여 주세요.'); });
+    c.on('open',()=>{ stage='ok'; clearTimeout(timer); setJoinMsg('착륙 허가를 요청하는 중…'); c.send({type:'join',team}); });
     c.on('data',d=>{
-      if(d.type==='joinfail'){ clearTimeout(fail); joinView(d.msg); }
-      if(d.type==='joined'){ clearTimeout(fail); }
-      if(d.type==='state'){ clearTimeout(fail); const prev=cl.st; cl.st=d.S; renderClient(); clientCine(prev,cl.st); }
+      if(d.type==='joinfail'){ done=true; joinView(d.msg); try{p.destroy();}catch(e){} }
+      if(d.type==='state'){ const prev=cl.st; cl.st=d.S; renderClient(); clientCine(prev,cl.st); }
       if(d.type==='ack'){ const cb=cl.cbs[d.rid]; delete cl.cbs[d.rid]; if(d.err) toast(d.err,'bad'); else if(cb) cb(); }
     });
-    c.on('close',()=>{ toast('통신이 끊겼습니다. 다시 연결합니다…','bad'); setTimeout(()=>connect(cl.code,cl.team),2500); });
+    c.on('close',()=>{ if(stage==='ok'&&!done){ done=true; toast('통신이 끊겼습니다. 다시 연결합니다…','bad'); setTimeout(()=>connect(cl.code,cl.team),2500); } });
   });
-  cl.peer.on('error',err=>{ if(err.type==='peer-unavailable'){ clearTimeout(fail); joinView('방을 찾지 못했습니다. 방 코드를 확인하세요.'); } });
+  p.on('error',err=>{
+    if(err.type==='peer-unavailable') fail('② 방 '+code+'을(를) 찾지 못했습니다. 방 코드가 맞는지, 선생님 전광판에 "🟢 학생 접속 가능"이 떠 있는지 확인하세요.');
+    else if(stage==='server') fail('① 연결 서버에 접속하지 못했습니다('+err.type+'). 이 기기의 인터넷 연결을 확인하세요.');
+  });
 }
 function clientCine(prev,st){
   if(st.phase==='lobby'||st.phase==='analysis'||!st.round) return;
