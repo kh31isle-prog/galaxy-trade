@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>은하 무역 연합</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+/* 레이아웃: 관제실 콘솔 — 별이 흐르는 우주 위 패널, 행성마다 성운 색, 숫자는 계기판 서체 */
+:root{
+  --void:#0b0f1d; --panel:#141a2eee; --panel2:#1c2440; --line:#2b3558;
+  --ink:#e8ecf8; --mute:#8a93b3; --signal:#ffcf4a; --good:#4fd18b; --bad:#ff6b6b;
+  --volcano:#ff8a4c; --aqua:#38c6e8; --terra:#7ad06a; --frost:#b9a8ff;
+  --f-display:"Black Han Sans","IBM Plex Sans KR",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background-color:var(--void);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body{padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background-image:radial-gradient(ellipse 60% 50% at 12% 8%,#6a4fc026,transparent 70%),radial-gradient(ellipse 55% 45% at 88% 85%,#1f6fa026,transparent 70%);background-attachment:fixed}
+body[data-neb=volcano]{background-image:radial-gradient(ellipse 70% 55% at 10% 0%,#ff6a2e33,transparent 70%),radial-gradient(ellipse 55% 45% at 90% 90%,#a0303026,transparent 70%)}
+body[data-neb=aqua]{background-image:radial-gradient(ellipse 70% 55% at 10% 0%,#38c6e82e,transparent 70%),radial-gradient(ellipse 55% 45% at 90% 90%,#1f4fa033,transparent 70%)}
+body[data-neb=terra]{background-image:radial-gradient(ellipse 70% 55% at 10% 0%,#7ad06a26,transparent 70%),radial-gradient(ellipse 55% 45% at 90% 90%,#2f6fd02e,transparent 70%)}
+body[data-neb=frost]{background-image:radial-gradient(ellipse 70% 55% at 10% 0%,#b9a8ff33,transparent 70%),radial-gradient(ellipse 55% 45% at 90% 90%,#7fd0ff22,transparent 70%)}
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;letter-spacing:.01em;text-wrap:balance}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.label{font-size:12px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grow{flex:1 1 auto}
+button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--mute)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+button.primary{background:var(--signal);color:#1a1405;border-color:var(--signal);font-weight:700}
+button.good{background:var(--good);color:#06210f;border-color:var(--good);font-weight:700}
+button.danger{border-color:var(--bad);color:var(--bad)}
+button.on{background:var(--signal);color:#1a1405;border-color:var(--signal)}
+button:disabled{opacity:.4;cursor:not-allowed}
+input,select{font:inherit;color:var(--ink);background:var(--void);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+input[type=number]{width:64px;font-family:var(--f-num)}
+.muted{color:var(--mute)}
+.small{font-size:13px}
+.tag-volcano{color:var(--volcano)}.tag-aqua{color:var(--aqua)}.tag-terra{color:var(--terra)}.tag-frost{color:var(--frost)}
+.bd-volcano{border-left:4px solid var(--volcano)}.bd-aqua{border-left:4px solid var(--aqua)}.bd-terra{border-left:4px solid var(--terra)}.bd-frost{border-left:4px solid var(--frost)}
+.up{color:var(--good)}.down{color:var(--bad)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--panel2);border:1px solid var(--line);padding:10px 18px;border-radius:10px;z-index:120;max-width:calc(100% - 32px)}
+.toast.bad{border-color:var(--bad)}
+.toast.ok{border-color:var(--good)}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--mute);font-weight:500}
+.scroll{overflow-x:auto}
+
+/* 아이콘 · 행성 */
+.ico{width:1.15em;height:1.15em;vertical-align:-.2em;display:inline-block;flex:none}
+.gd{white-space:nowrap;margin-right:4px}
+.pdot{display:inline-block;width:.85em;height:.85em;border-radius:50%;vertical-align:-.08em}
+.pd-volcano{background:radial-gradient(circle at 35% 35%,#ffb27a,#c2410c 55%,#3b1512);box-shadow:0 0 6px #ff8a4c88}
+.pd-aqua{background:radial-gradient(circle at 35% 35%,#9be7ff,#1670b0 55%,#0a2f55);box-shadow:0 0 6px #38c6e888}
+.pd-terra{background:radial-gradient(circle at 35% 35%,#b5f0a8,#3f8a3c 45%,#1b5ca6 75%);box-shadow:0 0 6px #7ad06a88}
+.pd-frost{background:radial-gradient(circle at 35% 35%,#fff,#c7d1ee 50%,#6c6aa8);box-shadow:0 0 6px #b9a8ff88}
+.planet{display:block;overflow:visible}
+.spin{animation:spin linear infinite}
+@keyframes spin{to{transform:translateX(-80px)}}
+.twk{animation:twk 3s ease-in-out infinite}
+@keyframes twk{50%{opacity:.35}}
+.steam{animation:steam 2.6s ease-out infinite;opacity:0}
+.steam.d2{animation-delay:.9s}.steam.d3{animation-delay:1.7s}
+@keyframes steam{0%{transform:translateY(0) scale(.6);opacity:.7}100%{transform:translateY(-20px) scale(1.6);opacity:0}}
+.rot{animation:rot 3s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.sway{transform-box:fill-box;transform-origin:50% 100%;animation:sway 3.2s ease-in-out infinite}
+.sway.d2{animation-delay:-1.1s}.sway.d3{animation-delay:-2s}
+@keyframes sway{50%{transform:rotate(7deg)}}
+.pulse{animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.wave{animation:wave 4s ease-in-out infinite}
+.wave.d2{animation-duration:5.5s;animation-direction:reverse}
+@keyframes wave{50%{transform:translateX(-12px)}}
+body.lowfx *,body.lowfx *::before,body.lowfx *::after{animation:none!important;transition:none!important}
+body.lowfx .steam{opacity:.35}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.steam{opacity:.35}}
+
+/* 시작 화면 */
+.landing{min-height:70vh;display:grid;place-items:center;text-align:center}
+.landing h1{font-size:clamp(34px,7vw,64px);line-height:1.05}
+.landing .sub{color:var(--signal);font-family:var(--f-display);font-size:clamp(18px,3vw,24px)}
+.landing .choices{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+.landing .choices button{padding:16px 26px;font-size:17px}
+.planet-row{display:flex;gap:clamp(8px,3vw,28px);justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.credit{margin-top:32px;font-size:13px;color:var(--mute)}
+
+/* 전광판 */
+.board-top{display:flex;gap:16px;flex-wrap:wrap;align-items:stretch}
+.board-top>.grow{flex:1 1 420px;min-width:0}
+.ctrl{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;box-shadow:0 6px 18px #0008;background:#141a2ef7}
+.wait{color:var(--signal)}
+.code-box{background:var(--panel2);border:1px solid var(--signal);border-radius:10px;padding:10px 18px;text-align:center}
+.code-box .num{font-size:40px;color:var(--signal);letter-spacing:.12em;line-height:1.1}
+.phase-title{font-size:clamp(24px,3.5vw,36px)}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.tcard{background:#0b0f1d99;border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.tcard .score{font-size:22px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--mute)}
+.dot.live{background:var(--good)}
+.feed{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.feed div{font-size:14px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.cols{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+@media (max-width:900px){.cols{grid-template-columns:1fr}}
+
+/* 은하 지도 */
+.galaxy{position:relative;height:380px;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse at 50% 50%,#1a2350,#070a16 78%);border:1px solid var(--line)}
+@media (max-width:640px){.galaxy{height:460px}}
+.gx-canvas{position:absolute;inset:0;width:100%;height:100%}
+.gx-planet{position:absolute;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.gx-planet .nm{font-family:var(--f-display);font-size:15px;position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);text-shadow:0 2px 6px #000,0 0 2px #000;white-space:nowrap}
+.gx-badge{position:absolute;transform:translate(-50%,-50%);padding:2px 8px;border-radius:999px;background:#0b0f1de6;border:2px solid currentColor;font-size:12px;text-align:center;line-height:1.3;white-space:nowrap}
+.gx-badge b{font-family:var(--f-num);color:var(--ink)}
+.gx-badge.off{border-style:dashed;opacity:.7}
+.gx-status{position:absolute;left:12px;top:10px;font-size:13px;background:#0b0f1dd9;padding:4px 12px;border-radius:999px;border:1px solid var(--line)}
+
+/* 연출 화면 */
+.cine{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(ellipse at center,#141a2ef0,#05070ef8);padding:24px max(16px,env(safe-area-inset-left,0px));text-align:center;cursor:pointer;animation:cineIn .7s ease;overflow:auto}
+.cine .ci-icon{font-size:60px;line-height:1}
+.cine .ci-round{color:var(--signal);letter-spacing:.25em;font-size:14px;margin-top:10px}
+.cine h2{font-size:clamp(40px,8vw,88px);line-height:1.05;margin:6px 0}
+.cine .ci-tag{font-family:var(--f-display);font-size:clamp(18px,3vw,28px);color:var(--signal)}
+.cine p{max-width:660px;margin:16px auto 0;font-size:clamp(15px,2vw,20px);line-height:1.75}
+.cine .ci-rule{margin-top:18px;display:inline-block;padding:6px 16px;border:1px solid var(--line);border-radius:999px;background:#0b0f1d}
+.cine .ci-skip{margin-top:24px;font-size:13px;color:var(--mute)}
+.cine.alarm{background:radial-gradient(ellipse at center,#3a0d12f0,#120406f8);animation:cineIn .3s ease,alarmFlash .9s ease-in-out 5}
+.cine.alarm .ci-round{color:var(--bad)}
+@keyframes alarmFlash{50%{box-shadow:inset 0 0 0 10px #ff3b3b,inset 0 0 140px #ff3b3b77}}
+@keyframes cineIn{from{opacity:0;transform:scale(1.05)}}
+.cine.out{opacity:0;transition:opacity .5s}
+.ev-art{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:24px;margin-bottom:6px}
+.meteor{position:absolute;left:50%;top:50%;width:80px;height:4px;border-radius:4px;background:linear-gradient(90deg,transparent,#ffd29a,#fff);animation:meteor 1.5s ease-in infinite}
+@keyframes meteor{0%{transform:translate(60px,-90px) rotate(125deg);opacity:0}25%{opacity:1}100%{transform:translate(-20px,0) rotate(125deg);opacity:0}}
+.ev-glow{position:absolute;inset:-8px;border-radius:50%;box-shadow:0 0 50px 14px #7fd0ff;animation:pulse 1.2s ease-in-out infinite}
+.barrier{font-size:44px}
+
+/* 학생 화면 */
+.stu{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.planet-head{display:flex;gap:14px;align-items:center}
+.ph-planet{flex:none}
+.banner{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.banner.quiet{border-color:var(--signal)}
+.inv{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.inv div{background:var(--void);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.inv .num{font-size:22px}
+.goods-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.goods-grid label{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--void);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+.offer{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.offer.in{border-color:var(--signal)}
+.mission{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.mission.built{border-color:var(--good)}
+.mart svg{width:38px;height:38px;display:block}
+.big-score{font-size:34px;color:var(--signal)}
+.closed{background:#0b0f1d;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin:8px 0;color:var(--signal)}
+
+/* 개척지 */
+.colony{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--sky1),var(--sky2) 58%,var(--ground) 58%,var(--ground2));padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.c-volcano{--sky1:#1e0b10;--sky2:#5a1e14;--ground:#3a1a14;--ground2:#1c0c09}
+.c-aqua{--sky1:#04122a;--sky2:#0d3a66;--ground:#0e4f7a;--ground2:#082f4f}
+.c-terra{--sky1:#061430;--sky2:#1d4f7a;--ground:#2f5a2a;--ground2:#1a3418}
+.c-frost{--sky1:#10142b;--sky2:#3a4370;--ground:#b8c3e6;--ground2:#8591bd}
+.zone{background:#0b0f1dd0;border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;min-width:0}
+.bart{width:100%;max-width:200px}
+.bart svg{width:100%;height:auto;display:block;overflow:visible}
+.zname{font-family:var(--f-display);font-size:16px}
+.workers{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:32px;align-items:flex-end}
+.wk{padding:0;border:0;background:none;width:22px;height:30px;display:inline-block}
+button.wk{cursor:pointer}
+button.wk:hover svg{filter:drop-shadow(0 0 4px #fff)}
+.wk svg{width:22px;height:30px;display:block}
+.wk.busy svg{animation:bob 1s ease-in-out infinite}
+.wk:nth-child(2n) svg{animation-delay:-.5s}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.zprod{font-size:24px;line-height:1.1}
+.zbtn{display:flex;gap:10px}
+.zbtn button{width:46px;height:40px;font-size:22px;padding:0;line-height:1}
+.lockbar,.built-strip{grid-column:1/-1}
+.lockbar{background:#0b0f1de6;border:1px dashed var(--signal);border-radius:8px;padding:8px 12px;color:var(--signal);text-align:center}
+.built-strip{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.built-strip .bs{display:flex;align-items:center;gap:6px;background:#0b0f1dd0;border:1px solid var(--good);border-radius:999px;padding:2px 10px 2px 4px;font-size:13px}
+.built-strip .bs svg{width:30px;height:30px}
+@media (max-width:480px){.colony{gap:8px;padding:10px}.zone{padding:8px}.zbtn button{width:40px}.zname{font-size:14px}}
+@media (max-width:700px){.ctrl{position:static}}
+
+/* 분석 */
+.strip{position:relative;height:120px;margin:10px 8px 34px;border-bottom:2px solid var(--line)}
+.strip .mk{position:absolute;bottom:-30px;transform:translateX(-50%);font-size:12px;text-align:center;white-space:nowrap}
+.strip .mk::before{content:"";display:block;width:2px;height:120px;margin:0 auto 4px;position:absolute;bottom:30px;left:50%;opacity:.5;background:currentColor}
+.strip .tr{position:absolute;width:12px;height:12px;border-radius:50%;transform:translate(-50%,50%);background:var(--signal);border:2px solid var(--void)}
+.bar{height:10px;border-radius:4px;background:var(--signal);min-width:2px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+const VERSION='v0.5';
+/* ===================== 게임 데이터 ===================== */
+const WORKERS = 12;
+const GOODS = ['E','F','crystal','pearl','chip','core'];
+const G = {
+  E:{n:'에너지',i:'⚡'}, F:{n:'식량',i:'🌱'},
+  crystal:{n:'화염 결정석',i:'💎'}, pearl:{n:'심해 진주',i:'🐚'},
+  chip:{n:'전자 제품',i:'💻'}, core:{n:'냉각 코어',i:'❄️'}
+};
+const TYPES = {
+  volcano:{n:'볼카노',i:'🌋',desc:'지열 에너지가 솟아오르는 화산 행성',rate:{E:3,F:1},spec:'crystal'},
+  aqua:{n:'아쿠아',i:'🌊',desc:'끝없는 바다 농장을 가진 해양 행성',rate:{E:1,F:3},spec:'pearl'},
+  terra:{n:'테라',i:'🌍',desc:'기술과 인프라가 가장 앞선 개척 본부',rate:{E:4,F:4},spec:'chip'},
+  frost:{n:'프로스트',i:'🧊',desc:'춥고 척박한 얼음 행성',rate:{E:1,F:2},spec:'core'}
+};
+const TYPECOL={volcano:'#ff8a4c',aqua:'#38c6e8',terra:'#7ad06a',frost:'#b9a8ff'};
+const MISSIONS = {
+  station:{n:'우주 정거장',need:{crystal:1,core:1}},
+  lab:{n:'해저 연구소',need:{pearl:1,chip:1}},
+  elevator:{n:'궤도 엘리베이터',need:{chip:1,core:1,crystal:1}},
+  server:{n:'양자 냉각 서버',need:{core:2,chip:1}},
+  farm:{n:'돔 온실 농장',need:{pearl:1,core:1}},
+  forge:{n:'핵융합 용광로',need:{crystal:2,pearl:1}}
+};
+const BUILD_BONUS = 0.3;   // 건물 1개당 생활지수 +30%
+const SPEC_PER_ROUND = 2;
+const MAX_PER_SIDE = 40;
+const ROUNDS = [null,
+  {n:'고립 시대',tag:'워프 폭풍',icon:'🌀',trade:false,lock:false,
+   story:'거대한 워프 폭풍이 은하를 덮쳤다. 행성 사이의 통신과 항로가 모두 끊겼다. 각 행성은 스스로 살아남아야 한다.',
+   rule:'교역 불가 · 일꾼 배치 자유'},
+  {n:'교환 시대',tag:'외부 통신 재개',icon:'📡',trade:true,lock:true,
+   story:'폭풍이 걷히고 외부 통신이 재개되었다. 화물선이 다시 뜬다. 하지만 발전소와 농장의 설비 전환 공사가 끝나지 않아 일꾼 배치는 바꿀 수 없다.',
+   rule:'교역 가능 · 일꾼 배치 고정'},
+  {n:'특화 시대',tag:'은하 무역 연합 결성',icon:'🤝',trade:true,lock:false,
+   story:'은하 무역 연합이 결성되고 설비 전환 공사가 끝났다. 이제 무엇을 만들고 무엇을 사 올지 자유롭게 정할 수 있다.',
+   rule:'교역 가능 · 일꾼 배치 자유'},
+  {n:'격변 시대',tag:'긴급 상황 발령',icon:'⚠️',trade:true,lock:false,
+   story:'은하 곳곳에서 긴급 상황이 보고되고 있다. 바뀐 상황에 맞춰 개척지를 다시 정비하라.',
+   rule:'교역 가능 · 일꾼 배치 자유 · 사건 발생'}
+];
+const EVENTS = {
+  meteor:{n:'☄️ 운석 충돌',d:'아쿠아 행성 식량 생산력 절반',
+    story:'거대 운석이 아쿠아의 해조류 양식장을 덮쳤다! 복구가 끝날 때까지 아쿠아의 식량 생산이 크게 줄어든다.'},
+  wall:{n:'🚧 무역 장벽',d:'볼카노 ↔ 아쿠아 거래 금지',
+    story:'볼카노와 아쿠아가 항로 분쟁을 벌이다 서로의 화물선 입항을 금지했다. 두 행성 사이의 교역이 끊겼다.'},
+  tech:{n:'🔬 기술 혁신',d:'프로스트 행성 에너지 생산력 3배',
+    story:'프로스트 과학자들이 극저온 초전도 발전 기술을 개발했다! 얼음 행성의 에너지 생산이 폭발적으로 늘어난다.'}
+};
+
+/* ===================== 계산 ===================== */
+function rates(S,team){
+  const r = {...TYPES[team.type].rate};
+  if(S.events.meteor && team.type==='aqua') r.F *= 0.5;
+  if(S.events.tech && team.type==='frost') r.E *= 3;
+  return r;
+}
+function production(S,team,wE){
+  const r = rates(S,team);
+  return {E:Math.floor(wE*r.E), F:Math.floor((WORKERS-wE)*r.F)};
+}
+function life(inv){ return (inv.E||0)*(inv.F||0); }
+function scoreOf(inv,built){ return Math.round(life(inv)*(1+BUILD_BONUS*built)); }
+// 성장률 기준: 그 행성이 무역 없이 혼자서 낼 수 있는 최고 생활지수(사건 없는 기본 생산력)
+function autarkyMax(type){ const r=TYPES[type].rate; let m=0; for(let w=0;w<=WORKERS;w++){ m=Math.max(m,Math.floor(w*r.E)*Math.floor((WORKERS-w)*r.F)); } return Math.max(1,m); }
+function baseLine(team){ return autarkyMax(team.type); }
+function growth(team,score){ if(!team.prodNow&&!team.hist[1]) return null; return Math.round(score/baseLine(team)*100); }
+function blocked(S,a,b){
+  if(!S.events.wall) return false;
+  const s=[a.type,b.type].sort().join('-');
+  return s==='aqua-volcano';
+}
+function sumGoods(o){ return GOODS.reduce((s,k)=>s+(o[k]||0),0); }
+function hasGoods(inv,o){ return GOODS.every(k=>(inv[k]||0)>=(o[k]||0)); }
+function cleanGoods(o){ const r={}; GOODS.forEach(k=>{const v=Math.max(0,Math.floor(Number(o&&o[k])||0)); if(v) r[k]=v;}); return r; }
+function fmt(o){ const p=GOODS.filter(k=>o[k]).map(k=>`<span class="gd" title="${G[k].n}">${ic(k)}${o[k]}</span>`); return p.length?p.join(''):'없음'; }
+function applyTrade(inv,give,get){ const n={...inv}; GOODS.forEach(k=>{n[k]=(n[k]||0)-(give[k]||0)+(get[k]||0);}); return n; }
+function tradeReason(st){
+  const R=ROUNDS[st.round]||{};
+  if(st.phase==='trade'&&R.trade) return null;
+  if(!R.trade) return '📡 통신 두절: 워프 폭풍 때문에 다른 행성과 연락할 수 없습니다.';
+  if(st.phase==='plan') return '🚀 화물선 출항 준비 중: 일꾼 배치가 확정되면 항로가 열립니다.';
+  if(st.phase==='result') return '📦 보급 정산 중: 항로가 잠시 닫혔습니다.';
+  return '항로가 닫혀 있습니다.';
+}
+
+function assignTeams(n){
+  const order = n<4 ? ['volcano','aqua','frost'].slice(0,Math.max(2,n)) : ['volcano','aqua','terra','frost'];
+  const counts={}, teams=[];
+  for(let i=0;i<n;i++){
+    const type=order[i%order.length];
+    counts[type]=(counts[type]||0)+1;
+    const k=counts[type];
+    const elig=Object.keys(MISSIONS).filter(m=>!MISSIONS[m].need[TYPES[type].spec]);
+    const missions=[elig[(k-1)%elig.length], elig[k%elig.length]];
+    teams.push({id:i+1,type,name:TYPES[type].n+' '+k+'호',workersE:6,
+      inv:{E:0,F:0,crystal:0,pearl:0,chip:0,core:0},missions,built:[],hist:{}});
+  }
+  return teams;
+}
+
+/* ===================== 교사(호스트) 상태와 규칙 ===================== */
+function newState(code){
+  return {code,round:0,phase:'lobby',teams:[],offers:[],trades:[],world:{},
+    events:{meteor:false,wall:false,tech:false},quiet:false,seq:1,atab:'cap'};
+}
+let S=null;
+
+function hostAction(a){
+  switch(a.t){
+    case 'start':{
+      const n=Math.min(30,Math.max(2,Math.floor(a.n)||2));
+      S.teams=assignTeams(n); S.round=1; S.phase='plan'; S.offers=[]; S.trades=[]; S.world={};
+      return;
+    }
+    case 'confirm':{ // 생산 확정
+      if(S.phase!=='plan') return;
+      let wE=0,wF=0;
+      S.teams.forEach(t=>{
+        const p=production(S,t,t.workersE);
+        t.inv.E=p.E; t.inv.F=p.F;
+        t.inv[TYPES[t.type].spec]+=SPEC_PER_ROUND;
+        t.prodNow={...p,wE:t.workersE};
+        wE+=p.E; wF+=p.F;
+      });
+      S.world[S.round]={E:wE,F:wF};
+      S.phase='trade';
+      return;
+    }
+    case 'end':{ // 라운드 결산
+      if(S.phase!=='trade') return;
+      S.offers.forEach(o=>{ if(o.status==='pending') o.status='expired'; });
+      S.teams.forEach(t=>{
+        const l=life(t.inv);
+        t.hist[S.round]={E:t.inv.E,F:t.inv.F,life:l,score:scoreOf(t.inv,t.built.length),wE:t.prodNow?t.prodNow.wE:t.workersE,
+          pE:t.prodNow?t.prodNow.E:0,pF:t.prodNow?t.prodNow.F:0};
+      });
+      S.phase='result';
+      return;
+    }
+    case 'next':{
+      if(S.phase!=='result') return;
+      if(S.round>=4){ S.phase='analysis'; return; }
+      S.round++; S.phase='plan';
+      return;
+    }
+    case 'analysis': S.phase='analysis'; return;
+    case 'back': S.phase = S.round && S.teams[0] && S.teams[0].hist[S.round] ? 'result' : 'plan'; return;
+    case 'event': if(EVENTS[a.k]) S.events[a.k]=!S.events[a.k]; return;
+    case 'quiet': S.quiet=!S.quiet; return;
+    case 'atab': S.atab=a.k; return;
+    case 'reset': S=newState(S.code); return;
+  }
+}
+
+function teamAction(teamId,a){
+  const team=S.teams.find(t=>t.id===teamId);
+  if(!team) return '행성을 찾을 수 없습니다.';
+  const R=ROUNDS[S.round];
+  switch(a.t){
+    case 'workers':{
+      if(S.phase!=='plan') return '지금은 일꾼 배치 시간이 아닙니다.';
+      if(R.lock) return '🔧 설비 전환 공사 중이라 이번 라운드는 일꾼 배치를 바꿀 수 없습니다.';
+      team.workersE=Math.min(WORKERS,Math.max(0,Math.floor(a.v)||0));
+      return null;
+    }
+    case 'propose':{
+      if(S.phase!=='trade'||!R.trade) return tradeReason(S)||'지금은 교역할 수 없습니다.';
+      const to=S.teams.find(t=>t.id===Number(a.to));
+      if(!to||to.id===team.id) return '거래할 행성을 고르세요.';
+      if(blocked(S,team,to)) return '🚧 무역 장벽: 볼카노와 아쿠아는 서로 화물선 입항이 금지되었습니다.';
+      const give=cleanGoods(a.give), get=cleanGoods(a.get);
+      if(!sumGoods(give)||!sumGoods(get)) return '주는 것과 받는 것이 모두 있어야 합니다. 공짜로 주거나 받는 거래는 안 됩니다.';
+      if(sumGoods(give)>MAX_PER_SIDE||sumGoods(get)>MAX_PER_SIDE) return '화물선 한 척에 '+MAX_PER_SIDE+'개까지만 실을 수 있습니다.';
+      if(!hasGoods(team.inv,give)) return '우리 창고에 그만큼 없습니다.';
+      if(S.offers.filter(o=>o.from===team.id&&o.status==='pending').length>=5) return '대기 중인 제안이 너무 많습니다. 먼저 몇 개를 취소하세요.';
+      S.offers.push({id:S.seq++,from:team.id,to:to.id,give,get,status:'pending',round:S.round});
+      return null;
+    }
+    case 'respond':{
+      const o=S.offers.find(x=>x.id===a.id);
+      if(!o||o.to!==team.id||o.status!=='pending') return '이미 처리된 제안입니다.';
+      if(!a.accept){ o.status='rejected'; return null; }
+      const from=S.teams.find(t=>t.id===o.from);
+      if(S.phase!=='trade') return '항로가 닫혀 거래할 수 없습니다.';
+      if(blocked(S,from,team)){ o.status='rejected'; return '🚧 무역 장벽 때문에 체결할 수 없습니다.'; }
+      if(!hasGoods(from.inv,o.give)){ o.status='failed'; return from.name+'의 재고가 부족해 체결에 실패했습니다.'; }
+      if(!hasGoods(team.inv,o.get)) return '우리 창고에 상대가 원하는 만큼이 없습니다.';
+      from.inv=applyTrade(from.inv,o.give,o.get);
+      team.inv=applyTrade(team.inv,o.get,o.give);
+      o.status='done';
+      S.trades.push({id:o.id,round:S.round,from:from.id,to:team.id,give:o.give,get:o.get});
+      return null;
+    }
+    case 'cancel':{
+      const o=S.offers.find(x=>x.id===a.id);
+      if(o&&o.from===team.id&&o.status==='pending') o.status='cancelled';
+      return null;
+    }
+    case 'build':{
+      if(S.round<2||S.phase!=='trade') return '건설은 2라운드부터 항로가 열렸을 때 할 수 있습니다.';
+      const m=MISSIONS[a.m];
+      if(!m||!team.missions.includes(a.m)) return '우리 행성의 미션이 아닙니다.';
+      if(team.built.includes(a.m)) return '이미 지었습니다.';
+      if(!hasGoods(team.inv,m.need)) return '재료가 부족합니다.';
+      GOODS.forEach(k=>{ team.inv[k]-= (m.need[k]||0); });
+      team.built.push(a.m);
+      return null;
+    }
+  }
+  return '알 수 없는 요청입니다.';
+}
+
+/* ===================== 그래픽 자원 ===================== */
+const ICONS={
+  E:'<path d="M13.5 2 4 13.5h6.5L9 22l11-12.5h-6.8z" fill="#ffcf4a"/>',
+  F:'<path d="M12 21V11" stroke="#4fd18b" stroke-width="2" fill="none"/><path d="M12 12C12 6 7 4 3 4c0 5 3 8 9 8zM12 14c0-5 4-8 9-8 0 5-3 9-9 8z" fill="#4fd18b"/>',
+  crystal:'<path d="M7 3h10l4 6-9 12L3 9z" fill="#ff6a3d"/><path d="M7 3l5 6 5-6M3 9h18M12 9v12" stroke="#ffd0a8" stroke-width="1" fill="none"/>',
+  pearl:'<path d="M2.5 15c2 6 17 6 19 0z" fill="#38c6e8"/><circle cx="12" cy="11" r="5.5" fill="#f2eeff"/><circle cx="10" cy="9" r="1.6" fill="#fff"/>',
+  chip:'<path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3" stroke="#7ad06a" stroke-width="1.5"/><rect x="6" y="6" width="12" height="12" rx="2" fill="#7ad06a"/><rect x="9" y="9" width="6" height="6" fill="#1d3b1c"/>',
+  core:'<rect x="7" y="3" width="10" height="18" rx="3" fill="#b9a8ff"/><path d="M12 7v10M8 10l8 4M16 10l-8 4" stroke="#fff" stroke-width="1.4"/>'
+};
+function ic(k){ return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[k]}</svg>`; }
+function pdot(type){ return `<span class="pdot pd-${type}" aria-hidden="true"></span>`; }
+
+const PLANET_ART={
+  volcano:{base:'#3a1511',glow:'#ff6a2e',speed:60,
+    surface:`<path d="M10 22 Q22 16 34 24 T58 20 Q70 26 90 18 V10 H10Z" fill="#26100d"/>
+<path d="M14 52 Q26 44 40 50 Q50 58 62 50 Q74 44 86 52 Q80 64 66 62 Q52 70 38 64 Q24 66 14 52Z" fill="#2a110e"/>
+<path d="M10 80 Q30 72 50 82 T90 78 V90 H10Z" fill="#24100c"/>
+<g fill="none" stroke="#ff7a2e" stroke-width="1.5" stroke-linecap="round"><path d="M12 34 L20 37 L27 33 L36 40 L44 36"/><path d="M50 30 L57 35 L55 42 L63 46"/><path d="M68 60 L74 66 L82 64 L88 70"/><path d="M18 70 L26 66 L33 72"/><path d="M40 56 L46 62 L44 68"/></g>
+<g fill="#ffb347"><circle cx="36" cy="40" r="1.8"/><circle cx="63" cy="46" r="2.2"/><circle cx="82" cy="64" r="1.6"/><circle cx="26" cy="66" r="1.4"/></g>`},
+  aqua:{base:'#0c4a80',glow:'#38c6e8',speed:55,
+    surface:`<g fill="#1670b0" opacity=".85"><ellipse cx="24" cy="30" rx="12" ry="6"/><ellipse cx="60" cy="58" rx="16" ry="8"/><ellipse cx="80" cy="26" rx="8" ry="5"/><ellipse cx="34" cy="76" rx="14" ry="5"/></g>
+<g fill="#0a3d6b"><ellipse cx="46" cy="40" rx="10" ry="4"/><ellipse cx="74" cy="80" rx="12" ry="4"/></g>
+<g fill="#e8d79a"><circle cx="60" cy="58" r="2"/><circle cx="24" cy="30" r="1.4"/><circle cx="80" cy="26" r="1.2"/></g>`,
+    clouds:`<g fill="#fff" opacity=".55"><ellipse cx="20" cy="46" rx="11" ry="2.6"/><ellipse cx="50" cy="22" rx="14" ry="2.4"/><ellipse cx="72" cy="44" rx="10" ry="2.2"/><ellipse cx="44" cy="68" rx="12" ry="2.6"/><ellipse cx="82" cy="72" rx="7" ry="2"/></g>`},
+  terra:{base:'#1b5ca6',glow:'#7fd0ff',speed:70,
+    surface:`<path d="M14 26 Q22 18 32 22 Q40 20 42 30 Q38 40 30 38 Q26 46 18 42 Q12 36 14 26Z" fill="#4f9a4a"/>
+<path d="M52 44 Q62 36 74 42 Q84 40 86 52 Q82 64 70 62 Q64 72 56 66 Q48 58 52 44Z" fill="#3f8a3c"/>
+<path d="M60 52 Q66 48 70 54 Q66 58 60 52Z" fill="#b9a35f"/>
+<path d="M20 64 Q28 60 34 66 Q32 76 24 74 Q18 70 20 64Z" fill="#4f9a4a"/>
+<path d="M62 14 Q72 11 82 16 Q76 22 66 20Z" fill="#e8f0ff"/>`,
+    clouds:`<g fill="#fff" opacity=".5"><ellipse cx="30" cy="50" rx="12" ry="2.4"/><ellipse cx="66" cy="30" rx="11" ry="2.2"/><ellipse cx="54" cy="76" rx="13" ry="2.4"/></g>`,
+    night:`<g fill="#ffd36a" class="twk"><circle cx="70" cy="66" r=".9"/><circle cx="74" cy="62" r=".7"/><circle cx="66" cy="72" r=".8"/><circle cx="78" cy="56" r=".7"/><circle cx="62" cy="76" r=".6"/><circle cx="80" cy="68" r=".6"/><circle cx="72" cy="74" r=".7"/></g>`},
+  frost:{base:'#c7d1ee',glow:'#b9a8ff',speed:95,
+    surface:`<g fill="#e9eefc"><ellipse cx="26" cy="28" rx="12" ry="7"/><ellipse cx="66" cy="62" rx="14" ry="8"/><ellipse cx="78" cy="24" rx="8" ry="5"/></g>
+<g fill="#a9b6dd" opacity=".8"><ellipse cx="46" cy="44" rx="9" ry="5"/><ellipse cx="28" cy="72" rx="10" ry="4"/></g>
+<g fill="none" stroke="#8193c9" stroke-width="1"><path d="M12 40 L24 46 L30 56 L44 58"/><path d="M52 20 L58 30 L70 34"/><path d="M60 80 L70 74 L84 78"/></g>`,
+    ringBack:`<g transform="rotate(-14 50 50)" fill="none" stroke="#b9a8ff"><path d="M3 50 A47 12 0 0 1 97 50" stroke-width="3.2" stroke-opacity=".6"/><path d="M9 50 A41 9 0 0 1 91 50" stroke-width="1.2" stroke-opacity=".5"/></g>`,
+    ringFront:`<g transform="rotate(-14 50 50)" fill="none" stroke="#b9a8ff"><path d="M97 50 A47 12 0 0 1 3 50" stroke-width="3.2" stroke-opacity=".9"/><path d="M91 50 A41 9 0 0 1 9 50" stroke-width="1.2" stroke-opacity=".7"/></g>`}
+};
+let PID=0;
+function planetSVG(type,size,spin=true){
+  const u='p'+(++PID), P=PLANET_ART[type], sp=spin?'spin':'';
+  const tile=(art,dur)=>`<g class="${sp}" style="animation-duration:${dur}s">${art}<g transform="translate(80 0)">${art}</g></g>`;
+  return `<svg class="planet" viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true">
+<defs><clipPath id="${u}c"><circle cx="50" cy="50" r="40"/></clipPath>
+<radialGradient id="${u}s" cx="34%" cy="32%" r="72%"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".82"/></radialGradient>
+<radialGradient id="${u}g"><stop offset=".7" stop-color="${P.glow}" stop-opacity="0"/><stop offset=".8" stop-color="${P.glow}" stop-opacity=".5"/><stop offset="1" stop-color="${P.glow}" stop-opacity="0"/></radialGradient></defs>
+<circle cx="50" cy="50" r="50" fill="url(#${u}g)"/>${P.ringBack||''}
+<g clip-path="url(#${u}c)"><rect width="100" height="100" fill="${P.base}"/>${tile(P.surface,P.speed)}${P.clouds?tile(P.clouds,P.speed*.6):''}
+<circle cx="50" cy="50" r="40" fill="url(#${u}s)"/>${P.night||''}</g>${P.ringFront||''}</svg>`;
+}
+
+/* 개척지 건물 (viewBox 0 0 120 80) */
+const BUILD_ART={
+  volcano:{pn:'지열 발전소',fn:'화산재 온실',
+    power:`<path d="M12 74 L18 34 L34 34 L40 74Z" fill="#5c2b22" stroke="#8a4434"/><path d="M80 74 L86 26 L104 26 L110 74Z" fill="#5c2b22" stroke="#8a4434"/>
+<rect x="38" y="46" width="46" height="28" fill="#43201a" stroke="#ff8a4c"/><rect x="44" y="52" width="8" height="7" fill="#ffcf4a"/><rect x="57" y="52" width="8" height="7" fill="#ffcf4a"/><rect x="70" y="52" width="8" height="7" fill="#ff8a4c"/>
+<path d="M0 78 Q30 70 60 78 T120 78 V80 H0Z" fill="#ff6a2e" opacity=".55"/>
+<circle class="steam" cx="95" cy="22" r="6" fill="#f3e9e4"/><circle class="steam d2" cx="26" cy="30" r="5" fill="#f3e9e4"/><circle class="steam d3" cx="95" cy="22" r="5" fill="#f3e9e4"/>`,
+    farm:`<path d="M14 74 A46 42 0 0 1 106 74Z" fill="#7ad06a26" stroke="#ffd3a0" stroke-width="1.5"/>
+<path d="M60 32 V74 M36 40 Q48 56 46 74 M84 40 Q72 56 74 74 M18 60 H102" stroke="#ffd3a066" fill="none"/>
+<g fill="#4fd18b"><path class="sway" d="M28 74 q-3-8 0-12 q3 4 0 12z"/><path class="sway d2" d="M40 74 q-3-10 0-15 q3 5 0 15z"/><path class="sway d3" d="M52 74 q-3-9 0-13 q3 4 0 13z"/><path class="sway" d="M66 74 q-3-10 0-15 q3 5 0 15z"/><path class="sway d2" d="M78 74 q-3-9 0-13 q3 4 0 13z"/><path class="sway d3" d="M90 74 q-3-7 0-11 q3 4 0 11z"/></g>
+<rect x="0" y="74" width="120" height="6" fill="#2a120e"/>`},
+  aqua:{pn:'조력 발전기',fn:'해조류 양식장',
+    power:`<rect x="56" y="20" width="6" height="50" fill="#9fb6cc"/>
+<g class="rot" style="transform-origin:59px 20px"><path d="M59 20 L57 0 L63 2Z M59 20 L77 30 L74 35Z M59 20 L41 30 L44 35Z" fill="#e8f2ff"/></g><circle cx="59" cy="20" r="3" fill="#38c6e8"/>
+<rect x="44" y="58" width="30" height="10" rx="2" fill="#24384f"/>
+<path class="wave" d="M-20 64 Q-5 58 10 64 T40 64 T70 64 T100 64 T130 64 T160 64 V80 H-20Z" fill="#1a6fae" opacity=".9"/>
+<path class="wave d2" d="M-20 70 Q-5 65 10 70 T40 70 T70 70 T100 70 T130 70 T160 70 V80 H-20Z" fill="#0e4f7a"/>`,
+    farm:`<path d="M6 40 Q60 48 114 40" stroke="#e8ecf8" stroke-width="1" fill="none"/>
+<g fill="#ff8a4c"><circle cx="16" cy="41.5" r="4"/><circle cx="46" cy="44" r="4"/><circle cx="76" cy="44" r="4"/><circle cx="104" cy="41.5" r="4"/></g>
+<rect x="0" y="44" width="120" height="36" fill="#0e4f7a" opacity=".55"/>
+<g fill="none" stroke="#4fd18b" stroke-width="3" stroke-linecap="round"><path class="sway" d="M22 80 Q18 66 24 56 Q28 50 24 46"/><path class="sway d2" d="M36 80 Q40 68 34 58 Q30 52 34 48"/><path class="sway d3" d="M56 80 Q52 66 58 56 Q62 50 58 46"/><path class="sway" d="M72 80 Q76 68 70 58 Q66 52 70 48"/><path class="sway d2" d="M90 80 Q86 66 92 56 Q96 50 92 46"/></g>
+<path class="wave" d="M-20 46 Q-5 42 10 46 T40 46 T70 46 T100 46 T130 46 T160 46" stroke="#9be7ff" stroke-width="1.5" fill="none" opacity=".7"/>`},
+  terra:{pn:'핵융합로',fn:'수직 농장',
+    power:`<rect x="16" y="52" width="88" height="24" rx="3" fill="#24384f" stroke="#7fd0ff66"/>
+<g fill="#7fd0ff" opacity=".8"><rect x="24" y="60" width="10" height="6"/><rect x="40" y="60" width="10" height="6"/><rect x="70" y="60" width="10" height="6"/><rect x="86" y="60" width="10" height="6"/></g>
+<rect x="54" y="40" width="12" height="14" fill="#24384f"/>
+<ellipse cx="60" cy="32" rx="32" ry="12" fill="none" stroke="#7fd0ff" stroke-width="5"/>
+<ellipse class="pulse" cx="60" cy="32" rx="32" ry="12" fill="none" stroke="#e0f7ff" stroke-width="1.5"/>
+<circle class="pulse" cx="60" cy="32" r="8" fill="#e0f7ff"/>`,
+    farm:`<rect x="40" y="6" width="40" height="70" rx="3" fill="#1c2c44" stroke="#7fd0ff55"/>
+<g fill="#4fd18b"><rect x="44" y="12" width="32" height="6" rx="1"/><rect x="44" y="24" width="32" height="6" rx="1"/><rect x="44" y="36" width="32" height="6" rx="1"/><rect x="44" y="48" width="32" height="6" rx="1"/><rect x="44" y="60" width="32" height="6" rx="1"/></g>
+<g fill="#b5f0a8" class="pulse"><rect x="44" y="12" width="32" height="2"/><rect x="44" y="36" width="32" height="2"/><rect x="44" y="60" width="32" height="2"/></g>
+<path d="M60 6 V0" stroke="#7fd0ff"/><circle class="pulse" cx="60" cy="0" r="2" fill="#ff6b6b"/>
+<rect x="14" y="58" width="22" height="18" fill="#24384f"/><rect x="84" y="62" width="22" height="14" fill="#24384f"/>`},
+  frost:{pn:'태양광 발전소',fn:'지하 버섯 농장',
+    power:`<g stroke="#7fd0ff" stroke-width=".8"><path d="M6 74 L18 48 L44 48 L32 74Z" fill="#1d2f6b"/><path d="M44 74 L56 48 L82 48 L70 74Z" fill="#1d2f6b"/><path d="M82 74 L94 48 L118 48 L106 74Z" fill="#1d2f6b"/></g>
+<g stroke="#7fd0ff66" stroke-width=".6"><path d="M12 61 H38 M25 48 L19 74 M50 61 H76 M63 48 L57 74 M88 61 H112 M100 48 L94 74"/></g>
+<g fill="#fff"><path d="M18 48 L44 48 L43 51 L17 51Z"/><path d="M56 48 L82 48 L81 51 L55 51Z"/><path d="M94 48 L118 48 L117 51 L93 51Z"/></g>
+<circle class="pulse" cx="100" cy="16" r="9" fill="#fff6c8"/><circle cx="100" cy="16" r="14" fill="#fff6c8" opacity=".2"/>`,
+    farm:`<path d="M6 76 Q60 30 114 76Z" fill="#8f9ccc"/><path d="M30 56 Q60 34 90 56 Q60 46 30 56Z" fill="#fff" opacity=".85"/>
+<rect x="52" y="58" width="16" height="18" rx="2" fill="#2a2f55" stroke="#b9a8ff"/>
+<g class="pulse"><rect x="24" y="66" width="3" height="10" fill="#e8e0ff"/><ellipse cx="25.5" cy="66" rx="7" ry="4" fill="#b9a8ff"/>
+<rect x="88" y="64" width="3" height="12" fill="#e8e0ff"/><ellipse cx="89.5" cy="64" rx="8" ry="4.5" fill="#d9a8ff"/>
+<rect x="38" y="70" width="2.5" height="6" fill="#e8e0ff"/><ellipse cx="39" cy="70" rx="5" ry="3" fill="#b9a8ff"/></g>
+<circle cx="25.5" cy="66" r="12" fill="#b9a8ff" opacity=".18"/><circle cx="89.5" cy="64" r="12" fill="#d9a8ff" opacity=".18"/>`}
+};
+/* 개척 미션 건물 (viewBox 0 0 40 40) */
+const MISSION_ART={
+  station:'<ellipse cx="20" cy="20" rx="17" ry="7" fill="none" stroke="#b9a8ff" stroke-width="3"/><rect x="14" y="13" width="12" height="14" rx="3" fill="#e8ecf8"/><rect x="2" y="18" width="8" height="4" fill="#38c6e8"/><rect x="30" y="18" width="8" height="4" fill="#38c6e8"/>',
+  lab:'<rect x="4" y="30" width="32" height="6" fill="#24384f"/><path d="M6 30 A14 14 0 0 1 34 30Z" fill="#38c6e8" opacity=".7" stroke="#9be7ff"/><circle cx="16" cy="24" r="2" fill="#fff"/><circle cx="25" cy="21" r="1.5" fill="#fff"/>',
+  elevator:'<path d="M20 2 V36" stroke="#e8ecf8" stroke-width="2"/><rect x="15" y="14" width="10" height="8" rx="2" fill="#ffcf4a"/><rect x="10" y="34" width="20" height="4" fill="#24384f"/><circle cx="20" cy="2" r="2" fill="#7fd0ff"/>',
+  server:'<rect x="8" y="6" width="24" height="30" rx="2" fill="#24384f" stroke="#7fd0ff"/><g fill="#4fd18b"><rect x="12" y="11" width="4" height="2"/><rect x="12" y="19" width="4" height="2"/><rect x="12" y="27" width="4" height="2"/></g><g fill="#b9a8ff"><rect x="19" y="11" width="9" height="2"/><rect x="19" y="19" width="9" height="2"/><rect x="19" y="27" width="9" height="2"/></g>',
+  farm:'<path d="M4 34 A16 16 0 0 1 36 34Z" fill="#7ad06a40" stroke="#b5f0a8"/><g fill="#4fd18b"><circle cx="13" cy="30" r="3"/><circle cx="20" cy="27" r="3.5"/><circle cx="27" cy="30" r="3"/></g><rect x="2" y="34" width="36" height="4" fill="#24384f"/>',
+  forge:'<rect x="8" y="14" width="24" height="22" rx="2" fill="#5c2b22" stroke="#ff8a4c"/><rect x="14" y="4" width="6" height="10" fill="#5c2b22"/><path d="M15 34 Q14 26 20 22 Q26 26 25 34Z" fill="#ffb347"/><path d="M18 34 Q18 29 20 27 Q22 29 22 34Z" fill="#fff3c4"/>'
+};
+function missionArt(m){ return `<svg viewBox="0 0 40 40" aria-hidden="true">${MISSION_ART[m]}</svg>`; }
+function workerSVG(z){
+  const c=z==='E'?'#ffcf4a':'#4fd18b';
+  return `<svg viewBox="0 0 16 22" aria-hidden="true"><circle cx="8" cy="6.5" r="4" fill="#f1d3b5"/><path d="M3.4 6.3 A4.6 4.6 0 0 1 12.6 6.3Z" fill="${c}"/><rect x="3" y="5.6" width="10" height="1.4" rx=".7" fill="${c}"/><rect x="4" y="11" width="8" height="7.5" rx="2" fill="${c}"/><rect x="4.6" y="18.3" width="2.6" height="3.2" fill="#5a6385"/><rect x="8.8" y="18.3" width="2.6" height="3.2" fill="#5a6385"/></svg>`;
+}
+
+/* ===================== 효과 설정 · 효과음 ===================== */
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v);}catch(e){ return null; } }
+let LOWFX=(()=>{ const v=store('ksi-galaxy-lowfx'); if(v==='1'||v==='0') return v==='1'; try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } })();
+function applyFx(){ document.body.classList.toggle('lowfx',LOWFX); }
+function toggleFx(){ LOWFX=!LOWFX; store('ksi-galaxy-lowfx',LOWFX?'1':'0'); applyFx(); drawStars(performance.now()); kickGalaxy(); document.querySelectorAll('[data-act="fx"]').forEach(b=>b.textContent=fxLabel()); }
+function fxLabel(){ return LOWFX?'✨ 효과 켜기':'✨ 효과 줄이기'; }
+let SOUND=store('ksi-galaxy-sound')==='1', AC=null;
+function ac(){ if(!AC){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C(); } if(AC.state==='suspended') AC.resume(); return AC; }
+function beep(f,start,dur,type,vol,f2){
+  const a=ac(); if(!a) return;
+  const o=a.createOscillator(), g=a.createGain(), t=a.currentTime+start;
+  o.type=type||'sine'; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol||.12,t+.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+.05);
+}
+function sfx(k){
+  if(!SOUND) return;
+  try{
+    if(k==='trade'){ beep(660,0,.16,'triangle',.14); beep(990,.12,.3,'triangle',.14); }
+    if(k==='round'){ beep(110,0,1.3,'sawtooth',.05,220); beep(330,.4,.9,'sine',.1,495); beep(660,.9,1,'sine',.08); }
+    if(k==='alarm'){ for(let i=0;i<4;i++){ beep(620,i*.46,.23,'square',.05,880); beep(880,i*.46+.23,.23,'square',.05,620); } }
+  }catch(e){}
+}
+
+/* 배경 별 */
+const STARS={c:null,list:[],last:0,d:1};
+function startStars(){
+  const c=document.createElement('canvas'); c.id='stars'; document.body.prepend(c); STARS.c=c;
+  STARS.list=Array.from({length:170},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.3+.3,p:Math.random()*6.3,s:.4+Math.random()*1.2}));
+  window.addEventListener('resize',sizeStars); sizeStars(); requestAnimationFrame(starLoop);
+}
+function sizeStars(){ const d=Math.min(2,window.devicePixelRatio||1); STARS.d=d; STARS.c.width=innerWidth*d; STARS.c.height=innerHeight*d; drawStars(performance.now()); }
+function drawStars(now){
+  const c=STARS.c; if(!c) return; const x=c.getContext('2d'); x.setTransform(STARS.d,0,0,STARS.d,0,0); x.clearRect(0,0,innerWidth,innerHeight);
+  x.fillStyle='#fff';
+  for(const s of STARS.list){ x.globalAlpha=LOWFX?.55:.25+.5*(1+Math.sin(now/1000*s.s+s.p))/2; x.beginPath(); x.arc(s.x*innerWidth,s.y*innerHeight,s.r,0,6.283); x.fill(); }
+  x.globalAlpha=1;
+}
+function starLoop(now){ if(!LOWFX&&!document.hidden&&now-STARS.last>70){ STARS.last=now; drawStars(now); } requestAnimationFrame(starLoop); }
+
+/* 연출 화면 */
+let cineTimer=null;
+function showCine(html,cls,ms){
+  const old=document.querySelector('.cine'); if(old) old.remove();
+  const d=document.createElement('div'); d.className='cine '+(cls||''); d.setAttribute('role','dialog'); d.setAttribute('aria-live','polite');
+  d.innerHTML=`<div>${html}<div class="ci-skip">화면을 누르면 닫힙니다</div></div>`;
+  const close=()=>{ if(!d.isConnected) return; d.classList.add('out'); setTimeout(()=>d.remove(),500); };
+  d.addEventListener('click',close); document.body.appendChild(d);
+  clearTimeout(cineTimer); cineTimer=setTimeout(close,ms||8000);
+}
+function roundCine(r){
+  const R=ROUNDS[r]; if(!R) return;
+  showCine(`<div class="ci-icon">${R.icon}</div><div class="ci-round">ROUND ${r}</div><h2>${R.n}</h2><div class="ci-tag">${R.tag}</div><p>${R.story}</p><div class="ci-rule">${R.rule}</div>`,'',9000);
+}
+function eventArt(k){
+  if(k==='meteor') return `<div class="ev-art">${planetSVG('aqua',130)}<span class="meteor"></span></div>`;
+  if(k==='tech') return `<div class="ev-art"><span class="ev-glow"></span>${planetSVG('frost',130)}</div>`;
+  return `<div class="ev-art">${planetSVG('volcano',100)}<span class="barrier">⛔</span>${planetSVG('aqua',100)}</div>`;
+}
+function alarmCine(k){
+  const E=EVENTS[k];
+  showCine(`${eventArt(k)}<div class="ci-round">⚠ 긴급 상황 발생</div><h2>${E.n}</h2><p>${E.story}</p><div class="ci-rule">${E.d}</div>`,'alarm',9000);
+}
+
+/* ===================== 공용 도구 ===================== */
+const $=s=>document.querySelector(s);
+const app=$('#app');
+let toastTimer=null;
+function toast(msg,kind){
+  const t=$('#toast'); t.textContent=msg; t.className='toast '+(kind||''); t.hidden=false;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.hidden=true;},3400);
+}
+function phaseLabel(st){
+  if(st.phase==='lobby') return '대기실';
+  if(st.phase==='analysis') return '분석';
+  const R=ROUNDS[st.round];
+  const p={plan:'작업 배치 시간',trade:R.trade?'항로 개방':'생산 완료',result:'보급 정산'}[st.phase];
+  return st.round+'라운드 · '+R.n+' · '+p;
+}
+function teamById(st,id){ return st.teams.find(t=>t.id===id); }
+function tname(st,id){ const t=teamById(st,id); return t?`<span class="tag-${t.type}">${pdot(t.type)} ${t.name}</span>`:'?'; }
+
+/* ===================== 학생 화면 ===================== */
+let comp={to:'',give:{},get:{}};
+function colonySkeleton(team){
+  const A=BUILD_ART[team.type];
+  return `<div class="row"><h3 class="grow">🏗️ ${TYPES[team.type].n} 개척지</h3><span class="muted small">개척민 ${WORKERS}명 · 일꾼을 누르면 다른 건물로 이동</span></div>
+  <div class="colony c-${team.type}" style="margin-top:10px">
+    <div class="lockbar" hidden></div>
+    ${['E','F'].map(z=>`<div class="zone" data-zone="${z}">
+      <div class="bart"><svg viewBox="0 0 120 80" aria-hidden="true">${z==='E'?A.power:A.farm}</svg></div>
+      <div class="zname">${ic(z)} ${z==='E'?A.pn:A.fn}</div>
+      <div class="workers" data-wk="${z}"></div>
+      <div class="zprod"><span class="num" data-zp="${z}">0</span> <span class="small muted">${G[z].n}</span></div>
+      <div class="small muted" data-zr="${z}"></div>
+      <div class="zbtn"><button data-act="wadd" data-z="${z}" data-d="-1" aria-label="${z==='E'?A.pn:A.fn} 일꾼 한 명 빼기">−</button><button data-act="wadd" data-z="${z}" data-d="1" aria-label="${z==='E'?A.pn:A.fn} 일꾼 한 명 더하기">+</button></div>
+    </div>`).join('')}
+    <div class="built-strip" data-built hidden></div>
+  </div>
+  <div class="small" data-psum style="margin-top:8px"></div>`;
+}
+function curWorkers(root,team){ return (root._wPend&&Date.now()<root._wPend.until)?root._wPend.v:team.workersE; }
+function updateColony(root,st,team){
+  const R=ROUNDS[st.round]||{};
+  const canEdit=st.phase==='plan'&&!R.lock;
+  const wE=curWorkers(root,team), r=rates(st,team), p=production(st,team,wE);
+  ['E','F'].forEach(z=>{
+    const n=z==='E'?wE:WORKERS-wE, box=root.querySelector(`[data-wk="${z}"]`), sig=n+'|'+canEdit;
+    if(box.dataset.sig!==sig){
+      box.dataset.sig=sig;
+      box.innerHTML=n?Array.from({length:n},()=>canEdit?`<button class="wk busy" data-act="wmove" data-z="${z}" title="${z==='E'?'농장으로 보내기':'발전소로 보내기'}" aria-label="${z==='E'?'일꾼을 농장으로 보내기':'일꾼을 발전소로 보내기'}">${workerSVG(z)}</button>`:`<span class="wk busy">${workerSVG(z)}</span>`).join(''):'<span class="small muted">비어 있음</span>';
+    }
+    root.querySelector(`[data-zp="${z}"]`).textContent=p[z];
+    root.querySelector(`[data-zr="${z}"]`).textContent=`일꾼 ${n}명 × 1명당 ${+r[z].toFixed(1)}`;
+    root.querySelectorAll(`[data-act="wadd"][data-z="${z}"]`).forEach(b=>{ const nv=n+Number(b.dataset.d); b.disabled=!canEdit||nv<0||nv>WORKERS; });
+  });
+  const lb=root.querySelector('.lockbar');
+  let lock='';
+  if(st.phase==='plan'&&R.lock) lock='🔧 설비 전환 공사 중: 이번 라운드는 일꾼 배치를 바꿀 수 없습니다.';
+  else if(st.phase==='trade'||st.phase==='result') lock='⛏ 작업 중: 이번 라운드 생산이 확정되었습니다. 다음 라운드에 다시 배치할 수 있습니다.';
+  lb.hidden=!lock; lb.textContent=lock;
+  const bs=root.querySelector('[data-built]'), bsig=team.built.join(',');
+  if(bs.dataset.sig!==bsig){ bs.dataset.sig=bsig; bs.hidden=!team.built.length; bs.innerHTML=team.built.map(m=>`<span class="bs">${missionArt(m)}${MISSIONS[m].n}</span>`).join(''); }
+  const ps=root.querySelector('[data-psum]');
+  if(st.phase==='plan') ps.innerHTML=`예상 생산 ${ic('E')}<b class="num">${p.E}</b> ${ic('F')}<b class="num">${p.F}</b> → 생활지수 <b class="num">${p.E*p.F}</b> <span class="muted">(생산 확정 때 창고에 들어옵니다)</span>`;
+  else ps.innerHTML=team.prodNow?`<span class="muted">이번 라운드 생산: ${ic('E')}${team.prodNow.E} ${ic('F')}${team.prodNow.F}</span>`:'';
+}
+function studentView(root,st,teamId,send){
+  const team=teamById(st,teamId);
+  if(!team){ root.innerHTML='<div class="panel">행성 정보를 기다리는 중…</div>'; delete root.dataset.team; return; }
+  if(!root.querySelector('.stu')||root.dataset.team!==String(teamId)){
+    root.dataset.team=teamId; comp={to:'',give:{},get:{}}; root._wPend=null;
+    root.innerHTML=`<div class="stu">
+      <div class="panel bd-${team.type}"><div class="planet-head">
+        <div class="ph-planet">${planetSVG(team.type,96)}</div>
+        <div class="grow" style="min-width:0"><h2>${team.name}</h2><div class="muted small">${TYPES[team.type].desc}</div></div>
+        <div data-sec="score" style="text-align:right"></div></div></div>
+      <div class="banner" data-sec="banner"></div>
+      <div class="panel" data-sec="plan">${colonySkeleton(team)}</div>
+      <div class="panel" data-sec="inv"></div>
+      <div class="panel" data-sec="comp"></div>
+      <div class="panel" data-sec="offers"></div>
+      ${root.id==='preview'?'':`<div class="row" style="justify-content:center"><button data-act="fx" class="small">${fxLabel()}</button></div>`}
+    </div>`;
+    if(!root._bound){
+      root._bound=true;
+      root.addEventListener('click',e=>onStuClick(e,root));
+      root.addEventListener('input',e=>onStuInput(e,root));
+      root.addEventListener('change',e=>onStuInput(e,root));
+    }
+  }
+  root._st=st; root._team=teamId; root._send=send;
+  const sec=k=>root.querySelector(`[data-sec="${k}"]`);
+  const busy=el=>el.contains(document.activeElement)&&/INPUT|SELECT/.test(document.activeElement.tagName);
+  const R=ROUNDS[st.round]||{};
+  const sc=scoreOf(team.inv,team.built.length);
+  const gr=growth(team,sc);
+
+  sec('score').innerHTML=`<div class="label">현재 점수</div><div class="num big-score">${sc}</div>
+    <div class="small muted">${gr!==null?'자급자족 최고 대비 <b class="num '+(gr>=100?'up':'down')+'">'+gr+'%</b>':''}</div>`;
+
+  const b=sec('banner');
+  b.className='banner'+(st.quiet?' quiet':'');
+  const wait={plan:R.lock?'⏳ 설비 공사 중이라 할 일이 없습니다. 선생님이 생산을 확정하면 항로가 열립니다.':'👉 발전소와 농장에 일꾼을 배치하고 선생님의 생산 확정을 기다리세요.',
+    trade:R.trade?'👉 항로 개방! 제안을 보내고, 받은 제안에 답하고, 재료가 모이면 건설하세요.':'⏳ 생산 완료. 워프 폭풍이 지나가길 기다리세요.',
+    result:'⏳ 보급 정산 중입니다. 다음 라운드를 기다리세요.'}[st.phase];
+  b.innerHTML=`<b>${phaseLabel(st)}</b>${R.tag&&st.phase!=='analysis'?`<div class="small">${R.icon} <b>${R.tag}</b> <span class="muted">· ${R.rule}</span></div>`:''}
+    ${wait?'<div class="small wait">'+wait+'</div>':''}
+    ${st.quiet?'<div class="small" style="color:var(--signal)">🔇 무선 침묵: 대사 파견이 중단되었습니다. 자리에서 원격 통신(앱)으로만 거래하세요.</div>':''}
+    ${Object.keys(EVENTS).filter(k=>st.events[k]).map(k=>`<div class="small down">${EVENTS[k].n} · ${EVENTS[k].d}</div>`).join('')}`;
+
+  updateColony(root,st,team);
+
+  sec('inv').innerHTML=`<h3>📦 우리 창고</h3>
+    <div class="inv" style="margin-top:8px">${GOODS.map(k=>`<div><div class="small muted">${ic(k)} ${G[k].n}${k===TYPES[team.type].spec?' · 특산품':''}</div><div class="num">${team.inv[k]||0}</div></div>`).join('')}</div>
+    <p class="small muted" style="margin:8px 0">생활지수 = 에너지 × 식량 = <b class="num">${life(team.inv)}</b>. 건물 1개마다 점수 +30%.</p>
+    <h3 style="margin-top:6px">🏗️ 개척 미션</h3>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">${team.missions.map(m=>{
+      const M=MISSIONS[m], done=team.built.includes(m), ok=hasGoods(team.inv,M.need);
+      return `<div class="mission ${done?'built':''}"><span class="mart">${missionArt(m)}</span><div class="grow"><b>${M.n}</b><div class="small muted">재료 ${fmt(M.need)}</div></div>
+        ${done?'<span class="up">✔ 완공</span>':`<button class="good" data-act="build" data-m="${m}" ${ok&&st.phase==='trade'&&st.round>=2?'':'disabled'}>건설</button>`}</div>`;
+    }).join('')}</div>`;
+
+  const cp=sec('comp');
+  const reason=tradeReason(st), tradeOpen=!reason;
+  if(!busy(cp)){
+    const others=st.teams.filter(t=>t.id!==team.id);
+    cp.innerHTML=`<h3>🚀 화물선 거래 제안</h3>
+      ${tradeOpen?'':`<div class="closed small">${reason}</div>`}
+      <div class="row" style="margin:8px 0"><label for="c-to">대상 행성</label>
+        <select id="c-to" ${tradeOpen?'':'disabled'}><option value="">선택하세요</option>${others.map(t=>`<option value="${t.id}" ${String(comp.to)===String(t.id)?'selected':''} ${blocked(st,team,t)?'disabled':''}>${TYPES[t.type].i} ${t.name}${blocked(st,team,t)?' (입항 금지)':''}</option>`).join('')}</select></div>
+      <div class="label">우리가 줄 것</div>
+      <div class="goods-grid" style="margin:4px 0 10px">${GOODS.map(k=>`<label><span>${ic(k)} ${G[k].n}</span><input type="number" min="0" id="cg-${k}" data-side="give" data-k="${k}" value="${comp.give[k]||''}" placeholder="0" ${tradeOpen?'':'disabled'}></label>`).join('')}</div>
+      <div class="label">우리가 받을 것</div>
+      <div class="goods-grid" style="margin:4px 0 10px">${GOODS.map(k=>`<label><span>${ic(k)} ${G[k].n}</span><input type="number" min="0" id="cr-${k}" data-side="get" data-k="${k}" value="${comp.get[k]||''}" placeholder="0" ${tradeOpen?'':'disabled'}></label>`).join('')}</div>
+      <div class="row"><div class="grow small" data-cprev></div><button class="primary" data-act="propose" ${tradeOpen?'':'disabled'}>제안 보내기</button></div>`;
+  }
+  updateCompPreview(root);
+
+  const of=sec('offers');
+  const mine=st.offers.filter(o=>o.from===team.id||o.to===team.id);
+  const incoming=mine.filter(o=>o.to===team.id&&o.status==='pending');
+  const outgoing=mine.filter(o=>o.from===team.id&&o.status==='pending');
+  const past=mine.filter(o=>o.status!=='pending').slice(-6).reverse();
+  const stLabel={done:'✔ 체결',rejected:'거절됨',cancelled:'취소됨',failed:'재고 부족으로 실패',expired:'시간 종료'};
+  of.innerHTML=`<h3>📩 받은 제안 <span class="num muted">${incoming.length}</span></h3>
+    <div style="display:flex;flex-direction:column;gap:8px;margin:8px 0 14px">${incoming.length?incoming.map(o=>{
+      const after=applyTrade(team.inv,o.get,o.give), s2=scoreOf(after,team.built.length), d=s2-sc;
+      const can=hasGoods(team.inv,o.get);
+      return `<div class="offer in"><div>${tname(st,o.from)}의 제안</div>
+        <div>그쪽이 줌: <b>${fmt(o.give)}</b> &nbsp;·&nbsp; 그쪽이 원함: <b>${fmt(o.get)}</b></div>
+        <div class="small">수락하면 우리 점수 <span class="num">${sc} → ${s2}</span> <b class="num ${d>=0?'up':'down'}">(${d>=0?'▲':'▼'}${Math.abs(d)})</b>${can?'':' · <span class="down">재고 부족</span>'}</div>
+        <div class="row"><button class="good" data-act="accept" data-id="${o.id}" ${can?'':'disabled'}>수락</button><button data-act="reject" data-id="${o.id}">거절</button><button data-act="counter" data-id="${o.id}">역제안</button></div></div>`;
+    }).join(''):'<div class="small muted">아직 받은 제안이 없습니다.</div>'}</div>
+    <h3>📤 보낸 제안</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;margin:8px 0 14px">${outgoing.length?outgoing.map(o=>`<div class="offer"><div>${tname(st,o.to)}에게 · 줌 <b>${fmt(o.give)}</b> · 받음 <b>${fmt(o.get)}</b></div><div class="row"><span class="small muted grow">답을 기다리는 중</span><button data-act="cancel" data-id="${o.id}">취소</button></div></div>`).join(''):'<div class="small muted">대기 중인 제안이 없습니다.</div>'}</div>
+    ${past.length?`<div class="label">최근 기록</div><div class="small" style="margin-top:4px">${past.map(o=>`<div>${o.from===team.id?'→ '+tname(st,o.to):'← '+tname(st,o.from)} · ${o.from===team.id?'줌 '+fmt(o.give)+' / 받음 '+fmt(o.get):'받음 '+fmt(o.give)+' / 줌 '+fmt(o.get)} · <span class="${o.status==='done'?'up':'muted'}">${stLabel[o.status]}</span></div>`).join('')}</div>`:''}`;
+}
+function updateCompPreview(root){
+  const el=root.querySelector('[data-cprev]'); if(!el) return;
+  const st=root._st, team=teamById(st,root._team); if(!team) return;
+  const give=cleanGoods(comp.give), get=cleanGoods(comp.get);
+  if(!sumGoods(give)&&!sumGoods(get)){ el.innerHTML='<span class="muted">수량을 넣으면 거래 후 점수를 미리 볼 수 있습니다.</span>'; return; }
+  const sc=scoreOf(team.inv,team.built.length);
+  const after=applyTrade(team.inv,give,get);
+  const lack=!hasGoods(team.inv,give);
+  const s2=scoreOf(after,team.built.length), d=s2-sc;
+  el.innerHTML=lack?'<span class="down">우리 창고에 그만큼 없습니다.</span>':
+    `거래 후: ${ic('E')}${after.E} ${ic('F')}${after.F} → 점수 <b class="num">${s2}</b> <b class="num ${d>=0?'up':'down'}">(${d>=0?'▲':'▼'}${Math.abs(d)})</b>`;
+}
+let wTimer=null;
+function onStuInput(e,root){
+  const t=e.target;
+  if(t.id==='c-to'){ comp.to=t.value; return; }
+  if(t.dataset.side){ comp[t.dataset.side][t.dataset.k]=t.value; updateCompPreview(root); }
+}
+function onStuClick(e,root){
+  const b=e.target.closest('[data-act]'); if(!b||!root.contains(b)) return;
+  const act=b.dataset.act, id=Number(b.dataset.id);
+  if(act==='wadd'||act==='wmove'){
+    const st=root._st, team=teamById(st,root._team), R=ROUNDS[st.round]||{};
+    if(st.phase!=='plan'||R.lock){ toast(R.lock&&st.phase==='plan'?'🔧 설비 전환 공사 중이라 일꾼 배치를 바꿀 수 없습니다.':'지금은 일꾼 배치 시간이 아닙니다.','bad'); return; }
+    const cur=curWorkers(root,team);
+    const d=act==='wadd'?(b.dataset.z==='E'?1:-1)*Number(b.dataset.d):(b.dataset.z==='E'?-1:1);
+    const v=Math.max(0,Math.min(WORKERS,cur+d)); if(v===cur) return;
+    root._wPend={v,until:Date.now()+2500};
+    updateColony(root,st,team);
+    clearTimeout(wTimer); wTimer=setTimeout(()=>root._send({t:'workers',v}),180);
+    return;
+  }
+  if(act==='fx'){ toggleFx(); return; }
+  if(act==='propose'){
+    root._send({t:'propose',to:comp.to,give:comp.give,get:comp.get},()=>{ comp={to:comp.to,give:{},get:{}}; forceComp(root); toast('🚀 화물선이 제안을 싣고 출발했습니다.','ok'); });
+  } else if(act==='accept') root._send({t:'respond',id,accept:true},()=>toast('거래가 체결되었습니다! 화물이 도착했습니다.','ok'));
+  else if(act==='reject') root._send({t:'respond',id,accept:false});
+  else if(act==='cancel') root._send({t:'cancel',id});
+  else if(act==='build') root._send({t:'build',m:b.dataset.m},()=>toast('🏗️ 건설 완료! 점수 +30%','ok'));
+  else if(act==='counter'){
+    const o=root._st.offers.find(x=>x.id===id); if(!o) return;
+    comp={to:String(o.from),give:{...o.get},get:{...o.give}};
+    root._send({t:'respond',id,accept:false});
+    forceComp(root);
+    root.querySelector('[data-sec="comp"]').scrollIntoView({behavior:'smooth',block:'start'});
+    toast('조건을 바꿔서 다시 보내세요.');
+  }
+}
+function forceComp(root){ if(document.activeElement) document.activeElement.blur(); studentView(root,root._st,root._team,root._send); }
+
+/* ===================== 은하 지도 ===================== */
+const GX={el:null,types:'',psize:0,seen:0,ships:[],raf:0,stars:[],centers:{},pos:{},W:0,H:0,d:1};
+function galaxyHost(){
+  if(!GX.el){
+    GX.el=document.createElement('div'); GX.el.className='galaxy';
+    GX.el.innerHTML='<canvas class="gx-canvas"></canvas><div class="gx-planets"></div><div class="gx-badges"></div><div class="gx-status"></div>';
+    GX.canvas=GX.el.querySelector('canvas'); GX.ctx=GX.canvas.getContext('2d');
+    GX.stars=Array.from({length:110},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.2+.3,p:Math.random()*6.3}));
+    if(window.ResizeObserver) new ResizeObserver(()=>layoutGalaxy()).observe(GX.el);
+    GX.seen=S.trades.length;
+  }
+  return GX.el;
+}
+function layoutGalaxy(){
+  const el=GX.el; if(!el||!el.isConnected||!S||!S.teams.length) return;
+  const W=el.clientWidth,H=el.clientHeight; if(!W||!H) return;
+  const d=Math.min(2,window.devicePixelRatio||1);
+  if(GX.W!==W||GX.H!==H||GX.d!==d){ GX.W=W; GX.H=H; GX.d=d; GX.canvas.width=W*d; GX.canvas.height=H*d; }
+  const types=[...new Set(S.teams.map(t=>t.type))], n=types.length;
+  const cols=W<640?Math.min(2,n):n, rows=Math.ceil(n/cols);
+  const cellW=W/cols, cellH=H/rows;
+  const psize=Math.round(Math.max(54,Math.min(130,Math.min(cellW,cellH)*.4)));
+  types.forEach((k,i)=>{
+    const cx=((i%cols)+.5)*cellW, cy=(Math.floor(i/cols)+.5)*cellH + (rows===1?(i%2?1:-1)*H*.05:0);
+    GX.centers[k]={x:cx,y:cy,r:psize/2};
+  });
+  const key=types.join(',');
+  const pl=el.querySelector('.gx-planets');
+  if(key!==GX.types||psize!==GX.psize){
+    GX.types=key; GX.psize=psize;
+    pl.innerHTML=types.map(k=>`<div class="gx-planet" data-k="${k}">${planetSVG(k,psize)}<div class="nm tag-${k}">${TYPES[k].n}</div></div>`).join('');
+  }
+  pl.querySelectorAll('.gx-planet').forEach(p=>{ const c=GX.centers[p.dataset.k]; p.style.left=c.x+'px'; p.style.top=c.y+'px'; });
+  GX.pos={};
+  types.forEach(k=>{
+    const ts=S.teams.filter(t=>t.type===k), c=GX.centers[k];
+    const Rx=Math.min(cellW*.46,c.r+40), Ry=Math.min(cellH*.42,(c.r+40)*(rows===1?.75:.8));
+    ts.forEach((t,j)=>{
+      const a=-Math.PI*.75+j*(2*Math.PI/ts.length);
+      GX.pos[t.id]={x:Math.max(34,Math.min(W-34,c.x+Math.cos(a)*Rx)),y:Math.max(16,Math.min(H-16,c.y+Math.sin(a)*Ry)),rx:Rx,ry:Ry,k};
+    });
+    c.rx=Rx; c.ry=Ry;
+  });
+  renderBadges();
+  drawGalaxy(performance.now());
+}
+function renderBadges(){
+  if(!GX.el) return;
+  const online=onlineTeams();
+  GX.el.querySelector('.gx-badges').innerHTML=S.teams.map(t=>{
+    const p=GX.pos[t.id]; if(!p) return '';
+    const sc=scoreOf(t.inv,t.built.length), gr=growth(t,sc);
+    return `<div class="gx-badge tag-${t.type} ${online.has(t.id)?'':'off'}" style="left:${p.x}px;top:${p.y}px" title="${t.name}">${t.id} <b>${gr===null?'–':gr+'%'}</b>${t.built.length?' 🏗️'+t.built.length:''}</div>`;
+  }).join('');
+  const R=ROUNDS[S.round]||{};
+  GX.el.querySelector('.gx-status').textContent=!S.round?'':!R.trade?'🌀 워프 폭풍: 모든 항로 두절':S.phase==='trade'?(S.quiet?'🔇 무선 침묵: 원격 통신으로만 교역':'🚀 항로 개방: 화물선 운항 중'):S.phase==='plan'?'🛠 작업 배치 중: 화물선 출항 대기':'📦 보급 정산 중';
+}
+function spawnShips(tr){
+  const now=performance.now(), ft=teamById(S,tr.from), tt=teamById(S,tr.to); if(!ft||!tt) return;
+  GX.ships.push({from:tr.from,to:tr.to,t0:now,dur:1800,col:TYPECOL[ft.type]});
+  GX.ships.push({from:tr.to,to:tr.from,t0:now+200,dur:1800,col:TYPECOL[tt.type]});
+}
+function kickGalaxy(){ if(!GX.raf&&GX.el) GX.raf=requestAnimationFrame(gxLoop); }
+function gxLoop(now){
+  GX.raf=0; if(!GX.el||!GX.el.isConnected||GX.el.offsetParent===null) return;
+  drawGalaxy(now);
+  if(!LOWFX||GX.ships.length) GX.raf=requestAnimationFrame(gxLoop);
+}
+function drawGalaxy(now){
+  const ctx=GX.ctx, W=GX.W, H=GX.H; if(!ctx||!W) return;
+  ctx.setTransform(GX.d,0,0,GX.d,0,0); ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fff';
+  for(const s of GX.stars){ ctx.globalAlpha=LOWFX?.5:.25+.45*(1+Math.sin(now/900+s.p))/2; ctx.fillRect(s.x*W,s.y*H,s.r,s.r); }
+  ctx.globalAlpha=1;
+  const R=ROUNDS[S.round]||{};
+  // 궤도
+  ctx.setLineDash([3,6]); ctx.lineWidth=1;
+  Object.entries(GX.centers).forEach(([k,c])=>{ if(!c.rx) return; ctx.strokeStyle=TYPECOL[k]; ctx.globalAlpha=.3; ctx.beginPath(); ctx.ellipse(c.x,c.y,c.rx,c.ry,0,0,6.283); ctx.stroke(); });
+  ctx.setLineDash([]); ctx.globalAlpha=1;
+  // 이번 라운드 항로
+  ctx.strokeStyle='#ffcf4a'; ctx.lineWidth=1.2;
+  S.trades.filter(t=>t.round===S.round).forEach(t=>{ const a=GX.pos[t.from], b=GX.pos[t.to]; if(!a||!b) return; ctx.globalAlpha=.16; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); });
+  ctx.globalAlpha=1;
+  // 워프 폭풍
+  if(S.round&&!R.trade){
+    const rot=LOWFX?0:now/5000;
+    ctx.lineWidth=7; ctx.strokeStyle='#9b7bff';
+    for(let i=0;i<8;i++){ ctx.globalAlpha=.07+.02*(i%3); ctx.beginPath(); ctx.ellipse(W/2,H/2,W*.18+i*W*.045,H*.16+i*H*.05,rot+i*.4,0,Math.PI*1.25); ctx.stroke(); }
+    ctx.globalAlpha=1;
+  }
+  // 사건
+  const pulse=LOWFX?.6:.45+.35*Math.sin(now/300);
+  const vc=GX.centers.volcano, aq=GX.centers.aqua, fr=GX.centers.frost;
+  if(S.events.wall&&vc&&aq){
+    const mx=(vc.x+aq.x)/2, my=(vc.y+aq.y)/2, dx=aq.x-vc.x, dy=aq.y-vc.y, L=Math.hypot(dx,dy)||1, nx=-dy/L, ny=dx/L;
+    ctx.strokeStyle='#ff4d4d'; ctx.lineWidth=4; ctx.setLineDash([8,6]); ctx.globalAlpha=.9;
+    ctx.beginPath(); ctx.moveTo(mx-nx*70,my-ny*70); ctx.lineTo(mx+nx*70,my+ny*70); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#ff4d4d'; ctx.font='bold 13px "IBM Plex Sans KR",sans-serif'; ctx.textAlign='center'; ctx.fillText('항로 봉쇄',mx,my-76*Math.abs(ny)-6);
+    ctx.globalAlpha=1;
+  }
+  if(S.events.meteor&&aq){ ctx.strokeStyle='#ff4d4d'; ctx.lineWidth=3; ctx.globalAlpha=pulse; ctx.beginPath(); ctx.arc(aq.x,aq.y,aq.r+8,0,6.283); ctx.stroke(); ctx.globalAlpha=1; }
+  if(S.events.tech&&fr){ ctx.strokeStyle='#7fd0ff'; ctx.lineWidth=4; ctx.globalAlpha=pulse; ctx.beginPath(); ctx.arc(fr.x,fr.y,fr.r+8,0,6.283); ctx.stroke(); ctx.globalAlpha=1; }
+  // 화물선
+  GX.ships=GX.ships.filter(sh=>now-sh.t0<sh.dur+450);
+  ctx.lineCap='round';
+  GX.ships.forEach(sh=>{
+    const a=GX.pos[sh.from], b=GX.pos[sh.to]; if(!a||!b) return;
+    const t=(now-sh.t0)/sh.dur; if(t<0) return;
+    const dx=b.x-a.x, dy=b.y-a.y, cx=(a.x+b.x)/2-dy*.22, cy=(a.y+b.y)/2+dx*.22;
+    const P=u=>({x:(1-u)*(1-u)*a.x+2*(1-u)*u*cx+u*u*b.x,y:(1-u)*(1-u)*a.y+2*(1-u)*u*cy+u*u*b.y});
+    if(t<=1){
+      for(let i=0;i<14;i++){ const p1=P(Math.max(0,t-.3*(i+1)/14)), p2=P(Math.max(0,t-.3*i/14)); ctx.strokeStyle=sh.col; ctx.globalAlpha=(1-i/14)*.85; ctx.lineWidth=3.2*(1-i/14)+.4; ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); }
+      const h=P(t); ctx.globalAlpha=1; ctx.shadowColor=sh.col; ctx.shadowBlur=14; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(h.x,h.y,3.8,0,6.283); ctx.fill(); ctx.shadowBlur=0;
+    } else {
+      const k=(now-sh.t0-sh.dur)/450; ctx.globalAlpha=Math.max(0,1-k); ctx.strokeStyle=sh.col; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(b.x,b.y,8+k*20,0,6.283); ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  });
+}
+
+/* ===================== 전광판 ===================== */
+function boardSkeleton(){
+  if(document.getElementById('b-top')) return;
+  app.innerHTML=`<div id="b-top"></div><div id="b-other"></div>
+    <div id="b-ctrl" class="panel row ctrl"></div><div id="b-note" class="small muted"></div>
+    <div id="b-gx" class="panel"><div class="row" style="margin-bottom:10px"><h3 class="grow">은하 지도</h3><span class="small muted">숫자 = 팀 번호 · % = 자급자족 최고 대비 성장률 · 점선 테두리 = 미접속</span></div><div id="gx-slot"></div></div>
+    <div id="b-mid"></div>
+    <div id="b-pv" class="panel"><div id="b-pv-head"></div><div id="preview" style="margin-top:12px"></div></div>`;
+  document.getElementById('gx-slot').replaceWith(galaxyHost());
+}
+function boardView(){
+  boardSkeleton();
+  const st=S, R=ROUNDS[st.round];
+  const joinUrl=location.href.split('#')[0]+'#join';
+  const online=onlineTeams();
+  const set=(id,html)=>{ document.getElementById(id).innerHTML=html; };
+  const show=(ids,on)=>ids.forEach(id=>{ document.getElementById(id).hidden=!on; });
+  set('b-top',`<div class="board-top">
+    <div class="panel grow"><div class="label">식민지 개척단</div><h1 class="phase-title">은하 무역 연합</h1>
+      <div style="color:var(--signal);font-family:var(--f-display);font-size:20px;margin-top:4px">${phaseLabel(st)}</div>
+      ${R&&st.phase!=='analysis'?`<div style="margin-top:4px">${R.icon} <b>${R.tag}</b> <span class="muted">· ${R.story}</span></div>`:''}</div>
+    <div class="code-box"><div class="label">방 코드</div><div class="num">${st.code}</div>
+      <div class="small muted" style="max-width:260px;word-break:break-all">${joinUrl}</div>
+      <div class="small" data-net>${netStatus}</div></div>
+  </div>`);
+  const main=['b-ctrl','b-note','b-gx','b-mid','b-pv'];
+  if(resumeAsk||st.phase==='lobby'||st.phase==='analysis'){
+    show(main,false); show(['b-other'],true);
+    if(resumeAsk) set('b-other',`<div class="panel"><h2>저장된 게임이 있습니다</h2>
+      <p class="muted">${phaseLabel(st)} · ${st.teams.length}팀. 수업 중에 새로고침했다면 이어서 하고, 새 수업이면 새 게임을 시작하세요.</p>
+      <div class="row"><button class="primary" data-h="fresh">새 게임 시작</button><button data-h="resume">이어서 하기</button></div></div>`);
+    else if(st.phase==='lobby') set('b-other',`<div class="panel"><h2>새 개척단 준비</h2>
+      <p class="muted">팀 수를 정하면 행성이 자동으로 배정됩니다. 2인 1팀 기준, 27명이면 13팀(한 팀은 3명).</p>
+      <div class="planet-row">${Object.keys(TYPES).map(k=>`<div style="text-align:center">${planetSVG(k,80)}<div class="tag-${k}" style="font-family:var(--f-display)">${TYPES[k].n}</div></div>`).join('')}</div>
+      <div class="row"><label for="h-n">팀 수</label><input type="number" id="h-n" min="2" max="30" value="13"><button class="primary" data-h="start">행성 배정하고 시작</button></div></div>${howTo()}`);
+    else set('b-other',analysisView());
+    return;
+  }
+  show(['b-other'],false); set('b-other',''); show(main,true);
+
+  const nextBtn={plan:['confirm','생산 확정 ▶'],trade:['end','라운드 종료 · 결산 ▶'],result:st.round<4?['next','다음 라운드 ▶']:['next','분석 시작 ▶']}[st.phase];
+  const hint={plan:R.lock?'설비 공사 중이라 학생이 바꿀 것이 없습니다. 바로 생산 확정을 눌러 항로를 여세요.':'학생들이 일꾼 배치를 마치면 생산 확정을 누르세요.',
+    trade:R.trade?'항로가 열렸습니다. 거래가 끝나면 라운드 종료를 누르세요.':'워프 폭풍으로 교역이 없습니다. 생산 결과를 확인했으면 라운드 종료를 누르세요.',
+    result:st.round<4?'결과를 확인하고 다음 라운드로 넘어가세요.':'모든 라운드가 끝났습니다. 분석을 시작하세요.'}[st.phase];
+  set('b-ctrl',`<button class="primary" data-h="${nextBtn[0]}">${nextBtn[1]}</button>
+    <span class="small" style="color:var(--signal);flex:1 1 220px;min-width:0">다음 할 일: ${hint}</span>
+    <button data-h="quiet" class="${st.quiet?'on':''}">🔇 무선 침묵 ${st.quiet?'켜짐':'꺼짐'}</button>
+    ${st.round>=3?Object.keys(EVENTS).map(k=>`<button data-h="event" data-k="${k}" class="${st.events[k]?'on':''}" title="${EVENTS[k].d}">${EVENTS[k].n}</button>`).join(''):''}
+    <span class="grow"></span>
+    <button data-h="sound" class="${SOUND?'on':''}">${SOUND?'🔊 효과음 켜짐':'🔈 효과음 꺼짐'}</button>
+    <button data-h="fx">${fxLabel()}</button>
+    <button data-h="analysis">분석 화면</button>
+    <button data-h="reset" class="danger" id="h-reset">새 게임</button>`);
+  set('b-note',st.round>=3?'사건 버튼을 누르면 경보 화면이 뜹니다. 운석 충돌·기술 혁신은 다음 생산 확정 때, 무역 장벽은 누르는 즉시 반영됩니다.':'');
+
+  const ranked=[...st.teams].map(t=>{const sc=scoreOf(t.inv,t.built.length);return {t,sc,gr:growth(t,sc)};})
+    .sort((a,b)=>(b.gr??0)-(a.gr??0));
+  const ws=st.world[st.round];
+  set('b-mid',`<div class="cols"><div class="panel"><div class="row"><h3 class="grow">행성 현황</h3><span class="small muted">성장률 순 · 성장률 = 지금 점수 ÷ 혼자서 낼 수 있는 최고 생활지수</span></div>
+    <div class="teams" style="margin-top:10px">${ranked.map(({t,sc,gr},i)=>`<div class="tcard bd-${t.type}">
+      <div class="row"><span class="dot ${online.has(t.id)?'live':''}" title="${online.has(t.id)?'접속 중':'미접속'}"></span><b class="grow">${t.id}. ${pdot(t.type)} ${t.name}</b><span class="small muted">#${i+1}</span></div>
+      <div class="row"><span class="num score">${sc}</span><span class="small ${gr===null?'muted':gr>=100?'up':'down'}">${gr===null?'생산 전':gr+'%'}</span></div>
+      <div class="small muted">${ic('E')}${t.inv.E} ${ic('F')}${t.inv.F}${t.built.length?' · 건물 '+t.built.length:''}</div></div>`).join('')}</div></div>
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div class="panel"><h3>세계 총생산</h3>${ws?`<div class="num" style="font-size:24px;margin-top:6px">${ic('E')}${ws.E} &nbsp;${ic('F')}${ws.F}</div>`:'<div class="muted small">생산 확정 후 표시됩니다.</div>'}
+        <div class="small muted" style="margin-top:4px">${Object.keys(st.world).map(r=>r+'R '+ic('E')+st.world[r].E+' '+ic('F')+st.world[r].F).join(' · ')}</div></div>
+      <div class="panel"><h3>방금 도착한 화물선</h3><div class="feed" style="margin-top:8px">${st.trades.slice(-12).reverse().map(tr=>`<div>${tname(st,tr.from)} ⇄ ${tname(st,tr.to)}<br><span class="small muted">${fmt(tr.give)} ↔ ${fmt(tr.get)}</span></div>`).join('')||'<div class="muted small">아직 거래가 없습니다.</div>'}</div></div>
+    </div></div>`);
+
+  set('b-pv-head',`<div class="row"><h3 class="grow">학생 화면 미리보기 · 한 화면 테스트</h3>
+    <label for="h-pv" class="small muted">행성</label><select id="h-pv"><option value="">닫기</option>${st.teams.map(t=>`<option value="${t.id}" ${String(previewTeam)===String(t.id)?'selected':''}>${t.id}. ${t.name}</option>`).join('')}</select></div>
+    <p class="small muted" style="margin:6px 0 0">여기서 고른 행성의 학생 화면을 교사 기기에서 직접 조작할 수 있습니다. 혼자 시험해 보거나 기기가 부족한 팀을 대신할 때 쓰세요.</p>`);
+  const pv=document.getElementById('preview');
+  if(previewTeam) studentView(pv,S,previewTeam,localSend(previewTeam));
+  else { pv.innerHTML=''; delete pv.dataset.team; }
+
+  if(st.trades.length<GX.seen) GX.seen=st.trades.length;
+  if(st.trades.length>GX.seen){ st.trades.slice(GX.seen).forEach(spawnShips); GX.seen=st.trades.length; sfx('trade'); }
+  layoutGalaxy(); kickGalaxy();
+}
+function howTo(){
+  return `<div class="panel"><h3>진행 순서</h3><ol class="muted" style="margin:8px 0 0;padding-left:20px">
+    <li>학생들은 위 주소로 들어와 <b>방 코드</b>와 <b>팀 번호</b>를 입력합니다.</li>
+    <li>라운드마다 '생산 확정' → (항로 개방) → '라운드 종료' 순서로 진행합니다.</li>
+    <li>1라운드 워프 폭풍(고립) → 2라운드 통신 재개(교환만) → 3라운드 무역 연합(특화) → 4라운드 긴급 상황 → 분석.</li>
+    <li>점수 = 에너지 × 식량 × (1 + 건물 수 × 0.3). 순위는 혼자서 낼 수 있는 최고 생활지수 대비 성장률로 매깁니다.</li>
+    <li>효과음은 전광판의 효과음 버튼으로 켭니다. 기기가 버벅이면 '효과 줄이기'를 누르세요.</li></ol></div>`;
+}
+let resetArmed=false, resumeAsk=false;
+function onBoardClick(e){
+  const b=e.target.closest('[data-h]'); if(!b||!app.contains(b)) return;
+  const h=b.dataset.h;
+  if(h==='resume'){ resumeAsk=false; boardView(); return; }
+  if(h==='fresh'){ resumeAsk=false; previewTeam=null; S=newState(S.code); commit(); return; }
+  if(h==='sound'){ SOUND=!SOUND; store('ksi-galaxy-sound',SOUND?'1':'0'); if(SOUND){ ac(); sfx('trade'); } boardView(); return; }
+  if(h==='fx'){ toggleFx(); boardView(); return; }
+  if(h==='reset'){
+    if(!resetArmed){ resetArmed=true; b.textContent='정말 초기화? 한 번 더 누르세요'; setTimeout(()=>{resetArmed=false;},3000); return; }
+    resetArmed=false; previewTeam=null;
+  }
+  const before={round:S.round,events:{...S.events}};
+  if(h==='start') hostAction({t:'start',n:Number(document.getElementById('h-n').value)});
+  else hostAction({t:h,k:b.dataset.k});
+  commit();
+  if(S.round!==before.round&&S.phase==='plan'){ roundCine(S.round); sfx('round'); }
+  if(h==='event'&&S.events[b.dataset.k]&&!before.events[b.dataset.k]){ alarmCine(b.dataset.k); sfx('alarm'); }
+}
+let previewTeam=null;
+function onBoardChange(e){
+  if(e.target.id==='h-pv'){ previewTeam=e.target.value?Number(e.target.value):null; boardView(); }
+}
+function localSend(teamId){
+  return (a,ok)=>{ const err=teamAction(teamId,a); if(err) toast(err,'bad'); else if(ok) ok(); commit(); };
+}
+
+/* ===================== 분석 화면 ===================== */
+function analysisView(){
+  const st=S;
+  const tab=st.atab||'cap';
+  const tabs=[['cap','① 행성 능력 공개'],['life','② 라운드별 변화'],['terms','③ 교역 조건'],['spec','④ 특화 점검']];
+  let h=`<div class="panel row"><div class="tabs grow">${tabs.map(([k,n])=>`<button data-h="atab" data-k="${k}" class="${tab===k?'on':''}">${n}</button>`).join('')}</div>
+    <button data-h="back">전광판으로</button></div><div class="panel">`;
+  const types=[...new Set(st.teams.map(t=>t.type))];
+  if(tab==='cap'){
+    h+=`<h2>각 행성은 무엇을 잘했을까?</h2><p class="muted">개척민 1명이 하루에 만드는 양과, 하나를 만들 때 포기한 다른 자원(기회비용)입니다.</p>
+      <div class="planet-row">${types.map(k=>`<div style="text-align:center">${planetSVG(k,72)}<div class="tag-${k}" style="font-family:var(--f-display)">${TYPES[k].n}</div></div>`).join('')}</div>
+      <div class="scroll"><table>
+      <tr><th>행성</th><th>${ic('E')}에너지 생산</th><th>${ic('F')}식량 생산</th><th>에너지 1개의 기회비용</th><th>식량 1개의 기회비용</th><th>비교우위</th></tr>
+      ${types.map(k=>{const r=TYPES[k].rate;const oe=r.F/r.E, of=r.E/r.F;return `<tr><td class="tag-${k}">${pdot(k)} ${TYPES[k].n}</td><td class="num">${r.E}</td><td class="num">${r.F}</td><td class="num">식량 ${+oe.toFixed(2)}</td><td class="num">에너지 ${+of.toFixed(2)}</td><td>${caLabel(k,types)}</td></tr>`;}).join('')}
+    </table></div>
+    <p class="small muted" style="margin-top:10px">테라는 두 자원 모두 가장 많이 만들지만(절대우위), 무엇을 포기하는지 따지면 다른 행성이 더 싸게 만드는 자원이 있습니다. 특산품 ${ic('crystal')}${ic('pearl')}${ic('core')}는 그 행성에만 있는 <b>천연자원</b>, ${ic('chip')}는 <b>기술</b>로 만든 상품입니다.</p>`;
+  }
+  if(tab==='life'){
+    const rounds=[1,2,3,4].filter(r=>st.teams.some(t=>t.hist[r]));
+    const avg=(k,r)=>{const ts=st.teams.filter(t=>t.type===k&&t.hist[r]);return ts.length?Math.round(ts.reduce((s,t)=>s+t.hist[r].life,0)/ts.length):0;};
+    const max=Math.max(1,...types.flatMap(k=>rounds.map(r=>avg(k,r))));
+    h+=`<h2>무역 전과 후, 생활지수는 어떻게 변했나?</h2><p class="muted">행성 유형별 평균 생활지수(에너지 × 식량)입니다.</p>
+      ${rounds.length?`<div class="scroll"><table><tr><th>행성</th>${rounds.map(r=>`<th>${r}R ${ROUNDS[r].n}</th>`).join('')}</tr>
+      ${types.map(k=>`<tr><td class="tag-${k}">${pdot(k)} ${TYPES[k].n}</td>${rounds.map(r=>{const v=avg(k,r);return `<td><div class="num">${v}</div><div class="bar" style="width:${Math.round(v/max*120)}px;background:var(--${k})"></div></td>`;}).join('')}</tr>`).join('')}
+      <tr><td><b>세계 총생산</b></td>${rounds.map(r=>`<td class="num">${st.world[r]?ic('E')+st.world[r].E+' '+ic('F')+st.world[r].F:'-'}</td>`).join('')}</tr></table></div>`:'<p class="muted">결산된 라운드가 아직 없습니다.</p>'}
+      <p class="small muted" style="margin-top:10px">2라운드(교환만)와 3라운드(특화 후 교환)의 세계 총생산을 비교해 보세요. 물건을 바꾸기만 하면 총량은 그대로입니다.</p>`;
+  }
+  if(tab==='terms'){
+    const pts=st.trades.map(tr=>{
+      const a=tr.give,b=tr.get;
+      const only=(o,k)=>GOODS.every(g=>g===k||!o[g]);
+      if(only(a,'E')&&only(b,'F')&&a.E&&b.F) return {r:b.F/a.E,tr};
+      if(only(a,'F')&&only(b,'E')&&a.F&&b.E) return {r:a.F/b.E,tr};
+      return null;}).filter(Boolean);
+    const lo=Math.log(0.2),hi=Math.log(5),x=v=>Math.min(100,Math.max(0,(Math.log(v)-lo)/(hi-lo)*100));
+    h+=`<h2>에너지 1개는 식량 몇 개와 바뀌었나?</h2><p class="muted">에너지와 식량만 맞바꾼 거래를 교환 비율 위치에 찍었습니다. 세로선은 각 행성이 에너지 1개를 만들 때 포기하는 식량(기회비용)입니다.</p>
+      <div class="strip">${types.map(k=>{const r=TYPES[k].rate;const v=r.F/r.E;return `<div class="mk tag-${k}" style="left:${x(v)}%">${pdot(k)}${TYPES[k].n}<br>${+v.toFixed(2)}</div>`;}).join('')}
+      ${pts.map((p,i)=>`<div class="tr" title="에너지 1 = 식량 ${p.r.toFixed(2)}" style="left:${x(p.r)}%;bottom:${12+(i%6)*16}px"></div>`).join('')}</div>
+      <p>${pts.length?`에너지·식량 맞교환 <b class="num">${pts.length}</b>건. 비율 범위: 에너지 1 = 식량 <b class="num">${Math.min(...pts.map(p=>p.r)).toFixed(2)}</b> ~ <b class="num">${Math.max(...pts.map(p=>p.r)).toFixed(2)}</b>`:'에너지와 식량만 맞바꾼 거래가 아직 없습니다.'}</p>
+      <p class="small muted">질문: 볼카노와 아쿠아가 둘 다 이득을 본 거래는 어디에 몰려 있나요? 두 행성의 기회비용 사이를 벗어난 거래는 누가 손해를 봤을까요?</p>`;
+  }
+  if(tab==='spec'){
+    const r=st.teams.some(t=>t.hist[3])?3:st.teams.some(t=>t.hist[2])?2:1;
+    h+=`<h2>${r}라운드에 각 행성은 무엇에 집중했나?</h2><p class="muted">개척민 12명 중 발전소(에너지)에 배치한 비율입니다.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">${st.teams.map(t=>{const hh=t.hist[r];const w=hh?hh.wE:t.workersE;return `<div class="row"><span class="tag-${t.type}" style="width:150px">${pdot(t.type)} ${t.name}</span>
+        <div class="grow" style="background:var(--void);border-radius:4px;height:14px;position:relative;min-width:120px"><div class="bar" style="height:14px;width:${w/WORKERS*100}%;background:var(--${t.type})"></div></div>
+        <span class="num small" style="width:110px">${ic('E')}${w} : ${ic('F')}${WORKERS-w}</span><span class="small muted" style="width:120px">${caLabel(t.type,types)}</span></div>`;}).join('')}</div>
+      <p class="small muted" style="margin-top:10px">비교우위가 있는 자원 쪽으로 기운 행성일수록 성장률이 높았나요?</p>`;
+  }
+  return h+'</div>';
+}
+function caLabel(k,types){
+  const r=TYPES[k].rate, mine=r.F/r.E;
+  const others=types.filter(x=>x!==k).map(x=>TYPES[x].rate.F/TYPES[x].rate.E);
+  if(!others.length) return '-';
+  const cheaperE=others.filter(o=>mine<o).length, cheaperF=others.filter(o=>mine>o).length;
+  if(cheaperE===others.length) return ic('E')+'에너지';
+  if(cheaperF===others.length) return ic('F')+'식량';
+  return '상대에 따라 다름';
+}
+
+/* ===================== 네트워크(PeerJS) ===================== */
+const PREFIX='ksi-galaxy-trade-';
+let peer=null, conns=new Set(), netStatus='연결 준비 중…', bTimer=null;
+function onlineTeams(){ const s=new Set(); conns.forEach(c=>{ if(c.open&&c.teamId) s.add(c.teamId); }); return s; }
+function commit(){
+  store('ksi-galaxy-host',JSON.stringify(S));
+  boardView();
+  clearTimeout(bTimer); bTimer=setTimeout(broadcast,60);
+}
+function broadcast(){ conns.forEach(c=>{ if(c.open&&c.teamId){ try{ c.send({type:'state',S}); }catch(e){} } }); }
+function startHost(){
+  let saved=null; try{ saved=JSON.parse(store('ksi-galaxy-host')||'null'); }catch(e){}
+  S=saved&&saved.code?saved:newState(String(Math.floor(1000+Math.random()*9000)));
+  resumeAsk=S.phase!=='lobby';
+  if(!S.atab) S.atab='cap';
+  app.addEventListener('click',onBoardClick);
+  app.addEventListener('change',onBoardChange);
+  boardView();
+  openPeer();
+}
+function openPeer(){
+  if(typeof Peer==='undefined'){ netStatus='⚠ 연결 모듈을 불러오지 못했습니다. 한 화면 테스트만 가능합니다.'; boardView(); return; }
+  peer=new Peer(PREFIX+S.code);
+  peer.on('open',()=>{ netStatus='🟢 학생 접속 가능'; boardView(); });
+  peer.on('error',err=>{
+    if(err.type==='unavailable-id'){ S.code=String(Math.floor(1000+Math.random()*9000)); peer.destroy(); commit(); openPeer(); return; }
+    netStatus='⚠ 연결 오류('+err.type+'). 한 화면 테스트는 계속 쓸 수 있습니다.'; boardView();
+  });
+  peer.on('disconnected',()=>{ netStatus='🟡 재연결 중…'; boardView(); try{peer.reconnect();}catch(e){} });
+  peer.on('connection',c=>{
+    c.on('data',d=>{
+      if(!d||typeof d!=='object') return;
+      if(d.type==='join'){
+        const t=S.teams.find(x=>x.id===Number(d.team));
+        if(!t){ c.send({type:'joinfail',msg:S.teams.length?'없는 팀 번호입니다.':'선생님이 아직 게임을 시작하지 않았습니다.'}); return; }
+        c.teamId=t.id; conns.add(c); c.send({type:'joined',team:t.id}); c.send({type:'state',S}); boardView(); return;
+      }
+      if(d.type==='act'&&c.teamId){
+        const err=teamAction(c.teamId,d.act);
+        c.send({type:'ack',rid:d.rid,err});
+        commit();
+      }
+    });
+    c.on('close',()=>{ conns.delete(c); boardView(); });
+  });
+}
+
+/* ===================== 학생 접속 ===================== */
+let cl={peer:null,conn:null,code:'',team:null,st:null,rid:1,cbs:{}};
+function joinView(msg){
+  const sv=(()=>{try{return JSON.parse(store('ksi-galaxy-join')||'{}');}catch(e){return {};}})();
+  app.innerHTML=`<div class="landing"><div style="width:100%;max-width:420px">
+    <div class="planet-row">${Object.keys(TYPES).map(k=>planetSVG(k,56)).join('')}</div>
+    <div class="label">식민지 개척단</div><h1 style="font-size:40px">은하 무역 연합</h1>
+    <div class="panel" style="margin-top:20px;text-align:left;display:flex;flex-direction:column;gap:12px">
+      <label for="j-code">방 코드 (전광판의 4자리)</label><input id="j-code" inputmode="numeric" maxlength="4" value="${sv.code||''}" class="num" style="font-size:24px;letter-spacing:.2em">
+      <label for="j-team">우리 팀 번호</label><input id="j-team" type="number" min="1" value="${sv.team||''}" class="num" style="width:100%;font-size:24px">
+      <button class="primary" id="j-go">🚀 행성에 착륙하기</button>
+      <div class="small ${msg?'down':'muted'}" id="j-msg">${msg||'같은 팀 두 명이 한 기기를 함께 씁니다.'}</div>
+    </div></div></div>`;
+  $('#j-go').onclick=()=>{
+    const code=$('#j-code').value.trim(), team=Number($('#j-team').value);
+    if(!/^\d{4}$/.test(code)||!team){ $('#j-msg').textContent='방 코드 4자리와 팀 번호를 입력하세요.'; return; }
+    store('ksi-galaxy-join',JSON.stringify({code,team}));
+    connect(code,team);
+  };
+}
+function connect(code,team){
+  cl.code=code; cl.team=team;
+  $('#j-msg')&&($('#j-msg').textContent='연결 중…');
+  if(typeof Peer==='undefined'){ joinView('연결 모듈을 불러오지 못했습니다. 인터넷 연결을 확인하세요.'); return; }
+  if(cl.peer){ try{cl.peer.destroy();}catch(e){} }
+  cl.peer=new Peer();
+  const fail=setTimeout(()=>{ if(!cl.st) joinView('방을 찾지 못했습니다. 방 코드를 확인하세요.'); },12000);
+  cl.peer.on('open',()=>{
+    const c=cl.peer.connect(PREFIX+code,{reliable:true}); cl.conn=c;
+    c.on('open',()=>c.send({type:'join',team}));
+    c.on('data',d=>{
+      if(d.type==='joinfail'){ clearTimeout(fail); joinView(d.msg); }
+      if(d.type==='joined'){ clearTimeout(fail); }
+      if(d.type==='state'){ clearTimeout(fail); const prev=cl.st; cl.st=d.S; renderClient(); clientCine(prev,cl.st); }
+      if(d.type==='ack'){ const cb=cl.cbs[d.rid]; delete cl.cbs[d.rid]; if(d.err) toast(d.err,'bad'); else if(cb) cb(); }
+    });
+    c.on('close',()=>{ toast('통신이 끊겼습니다. 다시 연결합니다…','bad'); setTimeout(()=>connect(cl.code,cl.team),2500); });
+  });
+  cl.peer.on('error',err=>{ if(err.type==='peer-unavailable'){ clearTimeout(fail); joinView('방을 찾지 못했습니다. 방 코드를 확인하세요.'); } });
+}
+function clientCine(prev,st){
+  if(st.phase==='lobby'||st.phase==='analysis'||!st.round) return;
+  if(!prev||prev.round!==st.round){ roundCine(st.round); return; }
+  Object.keys(EVENTS).forEach(k=>{ if(st.events[k]&&!prev.events[k]) alarmCine(k); });
+}
+function clientSend(a,ok){
+  if(!cl.conn||!cl.conn.open){ toast('통신이 끊겨 있습니다.','bad'); return; }
+  const rid=cl.rid++; if(ok) cl.cbs[rid]=ok;
+  cl.conn.send({type:'act',act:a,rid});
+}
+function renderClient(){
+  let root=document.getElementById('stu-root');
+  if(!root){ app.innerHTML='<div id="stu-root"></div>'; root=document.getElementById('stu-root'); }
+  if(cl.st.phase==='lobby'){ root.innerHTML='<div class="panel">선생님이 게임을 시작하기를 기다리는 중…</div>'; root.removeAttribute('data-team'); return; }
+  const t=teamById(cl.st,cl.team); if(t) document.body.dataset.neb=t.type;
+  studentView(root,cl.st,cl.team,clientSend);
+}
+
+/* ===================== 시작 화면 ===================== */
+function landing(){
+  app.innerHTML=`<div class="landing"><div>
+    <div class="planet-row">${Object.keys(TYPES).map(k=>planetSVG(k,84)).join('')}</div>
+    <div class="label">통합사회 · 국제 무역과 비교우위</div>
+    <h1>식민지 개척단<br>은하 무역 연합</h1>
+    <div class="sub" style="margin-top:10px">네 개의 행성, 하나의 은하 시장</div>
+    <div class="choices"><button class="primary" id="go-join">🚀 학생으로 참가</button><button id="go-host">🛰️ 교사 전광판 열기</button></div>
+    <div class="credit">제작: 신성고 사회과 교사 이석현 · ${VERSION}</div></div></div>`;
+  $('#go-join').onclick=()=>{ location.hash='join'; };
+  $('#go-host').onclick=()=>{ location.hash='host'; };
+}
+function route(){
+  const h=location.hash.replace('#','');
+  if(h==='host'){ if(!S) startHost(); else boardView(); }
+  else if(h==='join'){ if(!S) joinView(); }
+  else landing();
+}
+window.addEventListener('hashchange',()=>location.reload());
+applyFx(); startStars();
+route();
+</script>
+</body>
+</html>
