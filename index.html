@@ -6,7 +6,8 @@
 <title>은하 무역 연합</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js"></script>
 <style>
 /* 레이아웃: 관제실 콘솔 — 별이 흐르는 우주 위 패널, 행성마다 성운 색, 숫자는 계기판 서체 */
 :root{
@@ -209,7 +210,7 @@ button.wk:hover svg{filter:drop-shadow(0 0 4px #fff)}
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='v0.5.1';
+const VERSION='v0.6';
 /* ===================== 게임 데이터 ===================== */
 const WORKERS = 12;
 const GOODS = ['E','F','crystal','pearl','chip','core'];
@@ -1099,60 +1100,103 @@ function caLabel(k,types){
   return '상대에 따라 다름';
 }
 
-/* ===================== 네트워크(PeerJS) ===================== */
-const PREFIX='ksi-galaxy-trade-';
-const PEER_OPTS={config:{iceServers:[
-  {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']},
-  {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}]}};
-let peer=null, conns=new Set(), netStatus='연결 준비 중…', bTimer=null;
-function onlineTeams(){ const s=new Set(); conns.forEach(c=>{ if(c.open&&c.teamId) s.add(c.teamId); }); return s; }
+/* ===================== 네트워크(Firebase 중계) ===================== */
+// ▼ 선생님의 Firebase 프로젝트 연결 정보 (Firebase 콘솔 → 프로젝트 설정 → 내 앱 → firebaseConfig)
+const FIREBASE_CONFIG = {
+  apiKey: "여기에-붙여넣기",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+const ROOM_TTL = 6*3600*1000;           // 6시간 넘게 신호가 없는 방은 빈 방으로 봄
+let FB=null;
+function fbConfigured(){ return !!(FIREBASE_CONFIG.apiKey && !/여기/.test(FIREBASE_CONFIG.apiKey) && FIREBASE_CONFIG.databaseURL); }
+function fbDb(){
+  if(FB) return FB;
+  if(typeof firebase==='undefined'||!fbConfigured()) return null;
+  try{ if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG); FB=firebase.database(); }catch(e){ console.error(e); FB=null; }
+  return FB;
+}
+function rid8(){ return Math.random().toString(36).slice(2,10); }
+function newCode(){ return String(Math.floor(1000+Math.random()*9000)); }
+function clean(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* ---- 교사(전광판) ---- */
+let netStatus='연결 준비 중…', bTimer=null, roomRef=null, presence={}, hbTimer=null;
+const BOARD_SESSION=rid8();
+const HOST_ID=(()=>{ let v=store('ksi-galaxy-hostid'); if(!v){ v=rid8(); store('ksi-galaxy-hostid',v); } return v; })();
+function onlineTeams(){ const s=new Set(); Object.values(presence||{}).forEach(p=>{ if(p&&p.team) s.add(Number(p.team)); }); return s; }
+function setNet(t){ netStatus=t; const el=document.querySelector('[data-net]'); if(el) el.textContent=t; }
 function commit(){
   store('ksi-galaxy-host',JSON.stringify(S));
   boardView();
-  clearTimeout(bTimer); bTimer=setTimeout(broadcast,60);
+  clearTimeout(bTimer); bTimer=setTimeout(publishState,60);
 }
-function broadcast(){ conns.forEach(c=>{ if(c.open&&c.teamId){ try{ c.send({type:'state',S}); }catch(e){} } }); }
+function publishState(){ if(roomRef) roomRef.child('state').set(JSON.stringify(S)).catch(e=>setNet('⚠ 저장 실패('+(e.code||e.message)+'). 데이터베이스 규칙을 확인하세요.')); }
 function startHost(){
   let saved=null; try{ saved=JSON.parse(store('ksi-galaxy-host')||'null'); }catch(e){}
-  S=saved&&saved.code?saved:newState(String(Math.floor(1000+Math.random()*9000)));
+  S=saved&&saved.code?saved:newState(newCode());
   resumeAsk=S.phase!=='lobby';
   if(!S.atab) S.atab='cap';
   app.addEventListener('click',onBoardClick);
   app.addEventListener('change',onBoardChange);
   boardView();
-  openPeer();
+  openNet();
 }
-function openPeer(){
-  if(typeof Peer==='undefined'){ netStatus='⚠ 연결 모듈을 불러오지 못했습니다. 한 화면 테스트만 가능합니다.'; boardView(); return; }
-  peer=new Peer(PREFIX+S.code,PEER_OPTS);
-  netStatus='🟡 연결 서버에 접속하는 중…';
-  const hostWatch=setTimeout(()=>{ if(!peer.open){ netStatus='⚠ 연결 서버에 접속하지 못했습니다. 이 컴퓨터의 인터넷이나 학교 방화벽을 확인하세요.'; boardView(); } },10000);
-  peer.on('open',()=>{ clearTimeout(hostWatch); netStatus='🟢 학생 접속 가능'; boardView(); });
-  peer.on('error',err=>{
-    if(err.type==='unavailable-id'){ S.code=String(Math.floor(1000+Math.random()*9000)); peer.destroy(); commit(); openPeer(); return; }
-    netStatus='⚠ 연결 오류('+err.type+'). 한 화면 테스트는 계속 쓸 수 있습니다.'; boardView();
-  });
-  peer.on('disconnected',()=>{ netStatus='🟡 재연결 중…'; boardView(); try{peer.reconnect();}catch(e){} });
-  peer.on('connection',c=>{
-    c.on('data',d=>{
-      if(!d||typeof d!=='object') return;
-      if(d.type==='join'){
-        const t=S.teams.find(x=>x.id===Number(d.team));
-        if(!t){ c.send({type:'joinfail',msg:S.teams.length?'없는 팀 번호입니다.':'선생님이 아직 게임을 시작하지 않았습니다.'}); return; }
-        c.teamId=t.id; conns.add(c); c.send({type:'joined',team:t.id}); c.send({type:'state',S}); boardView(); return;
-      }
-      if(d.type==='act'&&c.teamId){
-        const err=teamAction(c.teamId,d.act);
-        c.send({type:'ack',rid:d.rid,err});
-        commit();
-      }
+function openNet(){
+  const db=fbDb();
+  if(!db){ setNet(typeof firebase==='undefined'?'⚠ 연결 모듈을 불러오지 못했습니다. 한 화면 테스트만 가능합니다.':'⚠ Firebase 연결 정보가 아직 없습니다. 한 화면 테스트만 가능합니다.'); return; }
+  setNet('🟡 연결 서버에 접속하는 중…');
+  const watch=setTimeout(()=>{ if(!roomRef) setNet('⚠ 연결 서버에 접속하지 못했습니다. 이 컴퓨터의 인터넷이나 학교 방화벽을 확인하세요.'); },12000);
+  db.ref('.info/connected').on('value',s=>{ if(roomRef) setNet(s.val()?'🟢 학생 접속 가능':'🟡 연결이 끊겨 다시 접속하는 중…'); });
+  claimRoom(S.code).then(()=>clearTimeout(watch));
+}
+async function claimRoom(code){
+  const db=fbDb();
+  try{
+    const res=await db.ref('rooms/'+code+'/meta').transaction(cur=>{
+      if(!cur||cur.host===HOST_ID||Date.now()-(cur.t||0)>ROOM_TTL) return {host:HOST_ID,t:Date.now(),sess:BOARD_SESSION};
+      return; // 다른 선생님이 쓰는 방
     });
-    c.on('close',()=>{ conns.delete(c); boardView(); });
-  });
+    if(!res.committed){ S.code=newCode(); commit(); return claimRoom(S.code); }
+  }catch(e){ setNet('⚠ 데이터베이스에 접근하지 못했습니다('+(e.code||e.message)+'). 규칙을 확인하세요.'); return; }
+  if(roomRef){ roomRef.child('actions').off(); roomRef.child('presence').off(); }
+  roomRef=db.ref('rooms/'+code);
+  clearInterval(hbTimer); hbTimer=setInterval(()=>roomRef.child('meta/t').set(Date.now()),60000);
+  publishState();
+  roomRef.child('presence').on('value',s=>{ presence=s.val()||{}; boardView(); });
+  roomRef.child('meta/sess').on('value',s=>{ const v=s.val(); if(v&&v!==BOARD_SESSION) stopHere(); });
+  roomRef.child('actions').on('child_added',snap=>{ const v=snap.val(); snap.ref.remove(); handleAction(v); });
+  setNet('🟢 학생 접속 가능');
+  boardView();
+}
+function stopHere(){
+  if(!roomRef) return;
+  roomRef.child('actions').off(); roomRef.child('presence').off(); roomRef.child('meta/sess').off(); clearInterval(hbTimer); roomRef=null;
+  setNet('⏸ 다른 창에서 전광판이 열려 이 창은 멈췄습니다. 이 창을 닫아 주세요.');
+}
+function ack(cid,rid,body){ if(roomRef&&cid) roomRef.child('acks/'+cid+'/'+rid).set(clean(body)); }
+function handleAction(v){
+  if(!v||typeof v!=='object') return;
+  if(v.type==='join'){
+    if(resumeAsk) return ack(v.cid,v.rid,{joinfail:'선생님이 게임을 준비하는 중입니다. 잠시 후 다시 착륙하세요.'});
+    const t=S.teams.find(x=>x.id===Number(v.team));
+    if(!t) return ack(v.cid,v.rid,{joinfail:S.teams.length?'없는 팀 번호입니다. 1번부터 '+S.teams.length+'번까지 있습니다.':'선생님이 아직 게임을 시작하지 않았습니다.'});
+    return ack(v.cid,v.rid,{joined:t.id});
+  }
+  if(v.type==='act'){
+    const err=resumeAsk?'선생님이 게임을 준비하는 중입니다.':teamAction(Number(v.team),v.act||{});
+    ack(v.cid,v.rid,{err:err||''});
+    commit();
+  }
 }
 
-/* ===================== 학생 접속 ===================== */
-let cl={peer:null,conn:null,code:'',team:null,st:null,rid:1,cbs:{}};
+/* ---- 학생 ---- */
+const CID=rid8();
+let cl={code:'',team:null,st:null,rid:1,cbs:{},room:null,joined:false,conn:null};
 function joinView(msg){
   const sv=(()=>{try{return JSON.parse(store('ksi-galaxy-join')||'{}');}catch(e){return {};}})();
   app.innerHTML=`<div class="landing"><div style="width:100%;max-width:420px">
@@ -1172,38 +1216,52 @@ function joinView(msg){
   };
 }
 function setJoinMsg(t,bad){ const m=$('#j-msg'); if(m){ m.textContent=t; m.className='small '+(bad?'down':'muted'); } }
+function leaveRoom(){
+  if(cl.room){ cl.room.child('acks/'+CID).off(); cl.room.child('state').off(); cl.room.child('acks/'+CID).remove(); if(cl.joined) cl.room.child('presence/'+CID).remove(); }
+  cl.room=null; cl.joined=false;
+}
 function connect(code,team){
+  const db=fbDb();
+  if(!db){ joinView(typeof firebase==='undefined'?'연결 모듈을 불러오지 못했습니다. 이 기기의 인터넷 연결을 확인하세요.':'이 게임에 아직 연결 설정이 없습니다. 선생님께 알려주세요.'); return; }
+  leaveRoom();
   cl.code=code; cl.team=team;
-  if(typeof Peer==='undefined'){ joinView('연결 모듈을 불러오지 못했습니다. 이 기기의 인터넷 연결을 확인하세요.'); return; }
-  if(cl.peer){ try{cl.peer.destroy();}catch(e){} }
-  const p=new Peer(PEER_OPTS); cl.peer=p;
-  let stage='server', timer=null, done=false;
+  let done=false, timer=null;
+  const fail=msg=>{ if(done) return; done=true; clearTimeout(timer); leaveRoom(); joinView(msg); };
   setJoinMsg('① 연결 서버에 접속하는 중…');
-  const fail=msg=>{
-    if(done) return; done=true; clearTimeout(timer);
-    try{p.destroy();}catch(e){}
-    if(cl.st){ toast(msg+' 다시 시도합니다…','bad'); setTimeout(()=>connect(cl.code,cl.team),4000); }
-    else joinView(msg);
-  };
-  timer=setTimeout(()=>fail('① 연결 서버에 접속하지 못했습니다. 이 기기의 인터넷이 막혀 있을 수 있습니다. 학교 와이파이라면 휴대폰 데이터로도 시도해 보세요.'),10000);
-  p.on('open',()=>{
-    stage='room'; clearTimeout(timer);
-    setJoinMsg('② 방 '+code+'을(를) 찾아 연결하는 중…');
-    const c=p.connect(PREFIX+code,{reliable:true}); cl.conn=c;
-    timer=setTimeout(()=>fail('③ 방 '+code+'은(는) 찾았지만 전광판과 이 기기가 연결되지 못했습니다. 학교 와이파이가 기기끼리의 연결을 막고 있을 수 있습니다. 선생님께 이 화면을 보여 주세요.'),20000);
-    c.on('iceStateChanged',st=>{ if(st==='failed') fail('③ 방 '+code+'은(는) 찾았지만 네트워크가 연결을 막았습니다. 학교 와이파이가 기기끼리의 연결을 막고 있을 수 있습니다. 선생님께 이 화면을 보여 주세요.'); });
-    c.on('open',()=>{ stage='ok'; clearTimeout(timer); setJoinMsg('착륙 허가를 요청하는 중…'); c.send({type:'join',team}); });
-    c.on('data',d=>{
-      if(d.type==='joinfail'){ done=true; joinView(d.msg); try{p.destroy();}catch(e){} }
-      if(d.type==='state'){ const prev=cl.st; cl.st=d.S; renderClient(); clientCine(prev,cl.st); }
-      if(d.type==='ack'){ const cb=cl.cbs[d.rid]; delete cl.cbs[d.rid]; if(d.err) toast(d.err,'bad'); else if(cb) cb(); }
+  timer=setTimeout(()=>fail('① 연결 서버에 접속하지 못했습니다. 이 기기의 인터넷 연결을 확인하세요.'),12000);
+  const room=db.ref('rooms/'+code); cl.room=room;
+  room.child('meta').once('value').then(s=>{
+    if(done) return;
+    const m=s.val();
+    if(!m||Date.now()-(m.t||0)>ROOM_TTL) return fail('② 방 '+code+'을(를) 찾지 못했습니다. 방 코드가 맞는지, 선생님 전광판에 "🟢 학생 접속 가능"이 떠 있는지 확인하세요.');
+    clearTimeout(timer);
+    setJoinMsg('② 방 '+code+'에 착륙 허가를 요청하는 중…');
+    timer=setTimeout(()=>fail('③ 방 '+code+'의 전광판이 응답하지 않습니다. 선생님 전광판 화면이 열려 있는지 확인하세요.'),15000);
+    const joinRid=cl.rid++;
+    room.child('acks/'+CID).on('child_added',a=>{
+      const v=a.val()||{}, r=Number(a.key); a.ref.remove();
+      if(r===joinRid){
+        clearTimeout(timer);
+        if(v.joinfail){ done=true; leaveRoom(); joinView(v.joinfail); return; }
+        done=true; cl.joined=true; cl.team=Number(v.joined)||team;
+        const pres=room.child('presence/'+CID);
+        db.ref('.info/connected').on('value',c=>{
+          if(!cl.joined||cl.room!==room) return;
+          if(c.val()){ pres.onDisconnect().remove(); pres.set({team:cl.team,t:Date.now()}); if(cl.conn===false) toast('다시 연결되었습니다.','ok'); cl.conn=true; }
+          else if(cl.conn){ cl.conn=false; toast('통신이 끊겼습니다. 다시 연결하는 중…','bad'); }
+        });
+        room.child('state').on('value',s=>{
+          const raw=s.val(); if(!raw) return;
+          let st; try{ st=JSON.parse(raw); }catch(e){ return; }
+          const prev=cl.st; cl.st=st; renderClient(); clientCine(prev,st);
+        });
+        return;
+      }
+      const cb=cl.cbs[r]; delete cl.cbs[r];
+      if(v.err) toast(v.err,'bad'); else if(cb) cb();
     });
-    c.on('close',()=>{ if(stage==='ok'&&!done){ done=true; toast('통신이 끊겼습니다. 다시 연결합니다…','bad'); setTimeout(()=>connect(cl.code,cl.team),2500); } });
-  });
-  p.on('error',err=>{
-    if(err.type==='peer-unavailable') fail('② 방 '+code+'을(를) 찾지 못했습니다. 방 코드가 맞는지, 선생님 전광판에 "🟢 학생 접속 가능"이 떠 있는지 확인하세요.');
-    else if(stage==='server') fail('① 연결 서버에 접속하지 못했습니다('+err.type+'). 이 기기의 인터넷 연결을 확인하세요.');
-  });
+    room.child('actions').push(clean({type:'join',team,cid:CID,rid:joinRid,t:Date.now()}));
+  }).catch(e=>fail('① 연결 서버에 접근하지 못했습니다('+(e.code||e.message)+').'));
 }
 function clientCine(prev,st){
   if(st.phase==='lobby'||st.phase==='analysis'||!st.round) return;
@@ -1211,15 +1269,16 @@ function clientCine(prev,st){
   Object.keys(EVENTS).forEach(k=>{ if(st.events[k]&&!prev.events[k]) alarmCine(k); });
 }
 function clientSend(a,ok){
-  if(!cl.conn||!cl.conn.open){ toast('통신이 끊겨 있습니다.','bad'); return; }
+  if(!cl.room||!cl.joined){ toast('통신이 끊겨 있습니다.','bad'); return; }
   const rid=cl.rid++; if(ok) cl.cbs[rid]=ok;
-  cl.conn.send({type:'act',act:a,rid});
+  cl.room.child('actions').push(clean({type:'act',team:cl.team,cid:CID,rid,act:a,t:Date.now()}));
 }
 function renderClient(){
   let root=document.getElementById('stu-root');
   if(!root){ app.innerHTML='<div id="stu-root"></div>'; root=document.getElementById('stu-root'); }
   if(cl.st.phase==='lobby'){ root.innerHTML='<div class="panel">선생님이 게임을 시작하기를 기다리는 중…</div>'; root.removeAttribute('data-team'); return; }
-  const t=teamById(cl.st,cl.team); if(t) document.body.dataset.neb=t.type;
+  if(!teamById(cl.st,cl.team)){ root.innerHTML='<div class="panel">선생님이 새 게임을 준비하는 중입니다. 잠시만 기다리세요…</div>'; root.removeAttribute('data-team'); return; }
+  const t=teamById(cl.st,cl.team); document.body.dataset.neb=t.type;
   studentView(root,cl.st,cl.team,clientSend);
 }
 
