@@ -47,6 +47,16 @@ button.on{background:var(--signal);color:#1a1405;border-color:var(--signal)}
 button:disabled{opacity:.4;cursor:not-allowed}
 input,select{font:inherit;color:var(--ink);background:var(--void);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
 input[type=number]{width:64px;font-family:var(--f-num)}
+textarea{font:inherit;color:var(--ink);background:var(--void);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-height:76px;resize:vertical;line-height:1.55}
+textarea:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+details.panel>summary{cursor:pointer}
+details.panel>summary h3{display:inline}
+.feed .undone{opacity:.55}
+.feed .undone>span:first-child{text-decoration:line-through}
+.undo-btn{padding:2px 8px;font-size:12px;margin-left:6px}
+.anscards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.anscard{text-align:left;white-space:pre-wrap;word-break:break-word;display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:12px;background:var(--void);line-height:1.6}
+.ans-big{white-space:pre-wrap;word-break:break-word;font-size:clamp(22px,3.2vw,38px);line-height:1.55;max-width:900px;margin:18px auto 0}
 .muted{color:var(--mute)}
 .small{font-size:13px}
 .tag-volcano{color:var(--volcano)}.tag-aqua{color:var(--aqua)}.tag-terra{color:var(--terra)}.tag-frost{color:var(--frost)}
@@ -244,7 +254,7 @@ button.wk:hover svg{filter:drop-shadow(0 0 4px #fff)}
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='v0.9';
+const VERSION='v1.0';
 /* ===================== 게임 데이터 ===================== */
 const WORKERS = 12;
 const GOODS = ['E','F','crystal','pearl','chip','core'];
@@ -335,6 +345,24 @@ function sumGoods(o){ return GOODS.reduce((s,k)=>s+(o[k]||0),0); }
 function hasGoods(inv,o){ return GOODS.every(k=>(inv[k]||0)>=(o[k]||0)); }
 function cleanGoods(o){ const r={}; GOODS.forEach(k=>{const v=Math.max(0,Math.floor(Number(o&&o[k])||0)); if(v) r[k]=v;}); return r; }
 function fmt(o){ const p=GOODS.filter(k=>o[k]).map(k=>`<span class="gd" title="${G[k].n}">${ic(k)}${o[k]}</span>`); return p.length?p.join(''):'없음'; }
+function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function liveTrades(st){ return (st.trades||[]).filter(t=>!t.undone); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function hhmm(ts){ const d=new Date(ts); return d.getHours()+':'+pad2(d.getMinutes()); }
+const POST=['awards','bawards','analysis'];
+const QUESTIONS=[
+  {k:'q1',q:'우리 행성이 에너지 1개를 더 만들려면 식량을 몇 개 포기해야 했나요?'},
+  {k:'q2',q:'우리 행성의 비교우위는 에너지와 식량 중 무엇이었나요? 그 이유는?'},
+  {k:'q3',q:'2라운드와 3라운드의 점수가 달랐다면 그 이유는 무엇인가요?'},
+  {k:'q4',q:'특산품을 거래한 이유와 에너지·식량을 거래한 이유는 어떻게 다른가요?'},
+  {k:'q5',q:'보너스 라운드에서 사건이 터졌을 때 우리 행성은 어떻게 대응했나요? 무역에 기대는 것의 좋은 점과 위험한 점을 하나씩 써 보세요.',bonus:true}];
+function bonusPlayed(st){ return st.round===4||st.teams.some(t=>t.hist&&t.hist[4]); }
+function qList(st){ return QUESTIONS.filter(q=>!q.bonus||bonusPlayed(st)); }
+function builtBy(st,team,r){ return (st.buildLog||[]).filter(b=>b.team===team.id&&b.round<=r).length; }
+function roundGrowth(team,r){ const h=team.hist[r]; if(!h) return null; return r===4?h.crisis:Math.round(h.score/baseLine(team)*100); }
+function teamTrades(st,team){ return liveTrades(st).filter(t=>t.from===team.id||t.to===team.id).map(t=>{ const mine=t.from===team.id; return {round:t.round,other:mine?t.to:t.from,gave:mine?t.give:t.get,got:mine?t.get:t.give,d:mine?t.dFrom:t.dTo}; }); }
+function bestTrade(st,team){ const l=teamTrades(st,team).filter(x=>typeof x.d==='number'); if(!l.length) return null; return l.reduce((a,b)=>b.d>a.d?b:a); }
+function goodsText(o){ return GOODS.filter(k=>o&&o[k]).map(k=>G[k].n+' '+o[k]).join(', ')||'-'; }
 function applyTrade(inv,give,get){ const n={...inv}; GOODS.forEach(k=>{n[k]=(n[k]||0)-(give[k]||0)+(get[k]||0);}); return n; }
 function tradeReason(st){
   const R=ROUNDS[st.round]||{};
@@ -417,6 +445,16 @@ function hostAction(a){
     case 'bonus': if(S.round===3&&S.phase==='awards'){ S.round=4; S.phase='plan'; } return;
     case 'event': if(EVENTS[a.k]&&S.round===4&&S.phase==='plan') S.events[a.k]=!S.events[a.k]; return;
     case 'quiet': S.quiet=!S.quiet; return;
+    case 'undo':{
+      const tr=S.trades.find(x=>x.id===Number(a.k)&&!x.undone); if(!tr) return '이미 처리된 거래입니다.';
+      if(tr.round!==S.round||S.phase!=='trade') return '이번 라운드 교역 시간에 체결된 거래만 되돌릴 수 있습니다.';
+      const f=teamById(S,tr.from), t=teamById(S,tr.to); if(!f||!t) return '행성을 찾을 수 없습니다.';
+      if(!hasGoods(f.inv,tr.get)) return f.name+'가 받은 물건을 이미 써서 되돌릴 수 없습니다.';
+      if(!hasGoods(t.inv,tr.give)) return t.name+'가 받은 물건을 이미 써서 되돌릴 수 없습니다.';
+      f.inv=applyTrade(f.inv,tr.get,tr.give); t.inv=applyTrade(t.inv,tr.give,tr.get);
+      tr.undone=true; const o=S.offers.find(x=>x.id===tr.id); if(o) o.status='undone';
+      return null;
+    }
     case 'atab': S.atab=a.k; return;
     case 'timer': S.timerEnd=a.m?Date.now()+a.m*60000:null; S.timerDur=(a.m||0)*60000; return;
     case 'reset': S=newState(S.code); return;
@@ -456,10 +494,20 @@ function teamAction(teamId,a){
       if(blocked(S,from,team)){ o.status='rejected'; return '🚧 무역 장벽 때문에 체결할 수 없습니다.'; }
       if(!hasGoods(from.inv,o.give)){ o.status='failed'; return from.name+'의 재고가 부족해 체결에 실패했습니다.'; }
       if(!hasGoods(team.inv,o.get)) return '우리 창고에 상대가 원하는 만큼이 없습니다.';
+      const sF0=scoreOf(from.inv,from.built.length), sT0=scoreOf(team.inv,team.built.length);
       from.inv=applyTrade(from.inv,o.give,o.get);
       team.inv=applyTrade(team.inv,o.get,o.give);
       o.status='done';
-      S.trades.push({id:o.id,round:S.round,from:from.id,to:team.id,give:o.give,get:o.get});
+      S.trades.push({id:o.id,round:S.round,from:from.id,to:team.id,give:o.give,get:o.get,
+        dFrom:scoreOf(from.inv,from.built.length)-sF0,dTo:scoreOf(team.inv,team.built.length)-sT0});
+      return null;
+    }
+    case 'names':{ team.members=String(a.v||'').replace(/\s+/g,' ').trim().slice(0,60); return null; }
+    case 'answer':{
+      if(!POST.includes(S.phase)) return '생각해 보기는 분석 시간에 제출할 수 있습니다.';
+      const ans={}; QUESTIONS.forEach(q=>{ const v=String((a.a||{})[q.k]||'').slice(0,800); if(v.trim()) ans[q.k]=v.trim(); });
+      if(!Object.keys(ans).length) return '답을 하나 이상 써 주세요.';
+      team.answers=ans; team.submittedAt=Date.now();
       return null;
     }
     case 'cancel':{
@@ -700,6 +748,8 @@ function studentView(root,st,teamId,send){
         <div class="grow" style="min-width:0"><h2>${team.name}</h2><div class="muted small">${TYPES[team.type].desc}</div></div>
         <div data-sec="score" style="text-align:right"></div></div></div>
       <div class="banner" data-sec="banner"></div>
+      <div class="panel" data-sec="ans" hidden></div>
+      <details class="panel" data-sec="recbox"><summary><h3>📋 우리 기록</h3> <span class="small muted">라운드가 끝날 때마다 자동으로 기록돼요</span></summary><div data-sec="rec"></div></details>
       <div class="panel" data-sec="plan">${colonySkeleton(team)}</div>
       <div class="panel" data-sec="inv"></div>
       <div class="panel" data-sec="comp"></div>
@@ -715,7 +765,7 @@ function studentView(root,st,teamId,send){
   }
   root._st=st; root._team=teamId; root._send=send;
   const sec=k=>root.querySelector(`[data-sec="${k}"]`);
-  const busy=el=>el.contains(document.activeElement)&&/INPUT|SELECT/.test(document.activeElement.tagName);
+  const busy=el=>el.contains(document.activeElement)&&/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
   const R=ROUNDS[st.round]||{};
   const sc=scoreOf(team.inv,team.built.length);
   const gr=growthSt(st,team,sc);
@@ -727,8 +777,11 @@ function studentView(root,st,teamId,send){
   b.className='banner'+(st.quiet?' quiet':'');
   const wait={plan:R.lock?'⏳ 설비 공사 중이라 할 일이 없습니다. 선생님이 생산을 확정하면 항로가 열립니다.':'👉 발전소와 농장에 일꾼을 배치하고 선생님의 생산 확정을 기다리세요.',
     trade:R.trade?'👉 항로 개방! 제안을 보내고, 받은 제안에 답하고, 재료가 모이면 건설하세요.':'⏳ 생산 완료. 워프 폭풍이 지나가길 기다리세요.',
-    result:'⏳ 보급 정산 중입니다. 다음 라운드를 기다리세요.'}[st.phase];
-  b.innerHTML=`<b>${phaseLabel(st)}</b>${R.tag&&st.phase!=='analysis'?`<div class="small">${R.icon} <b>${R.tag}</b> <span class="muted">· ${R.rule}</span></div>`:''}
+    result:'⏳ 보급 정산 중입니다. 다음 라운드를 기다리세요.',
+    awards:'✍️ 팀이 함께 아래 생각해 보기에 답을 쓰고 제출하세요. 우리 기록 표를 참고하세요.',
+    bawards:'✍️ 팀이 함께 아래 생각해 보기에 답을 쓰고 제출하세요. 우리 기록 표를 참고하세요.',
+    analysis:'✍️ 팀이 함께 아래 생각해 보기에 답을 쓰고 제출하세요. 우리 기록 표를 참고하세요.'}[st.phase];
+  b.innerHTML=`<b>${phaseLabel(st)}</b>${R.tag&&!POST.includes(st.phase)?`<div class="small">${R.icon} <b>${R.tag}</b> <span class="muted">· ${R.rule}</span></div>`:''}
     ${wait?'<div class="small wait">'+wait+'</div>':''}
     ${R.bonus?'<div class="small" style="color:var(--aqua)">⚡ 보너스 라운드: 본선 순위는 이미 확정됐어요. 이번 라운드는 위기 대응 점수로 따로 시상합니다.</div>':''}
     ${st.timerEnd?'<div class="small">⏱ 남은 시간 <b class="num" data-timer>–</b></div>':''}
@@ -736,6 +789,15 @@ function studentView(root,st,teamId,send){
     ${Object.keys(EVENTS).filter(k=>st.events[k]).map(k=>`<div class="small down">${EVENTS[k].n} · ${EVENTS[k].d}</div>`).join('')}`;
 
   updateColony(root,st,team);
+
+  const post=POST.includes(st.phase);
+  ['plan','comp','offers'].forEach(k=>{ sec(k).hidden=post; });
+  const rb=sec('recbox'); if(root._recMode!==post){ root._recMode=post; rb.open=post; }
+  const rec=sec('rec'), rsig=JSON.stringify([st.phase,Object.keys(team.hist),teamTrades(st,team).length,team.members||'',team.built.length]);
+  if(rec.dataset.sig!==rsig&&!busy(rec)){ rec.dataset.sig=rsig; rec.innerHTML=recordHTML(st,team); }
+  const an=sec('ans'); an.hidden=!post;
+  if(post){ const asig=[st.phase,qList(st).length,team.submittedAt||0].join('|');
+    if(an.dataset.sig!==asig&&!busy(an)){ an.dataset.sig=asig; an.innerHTML=ansHTML(st,team,loadDraft(st,team)); } }
 
   sec('inv').innerHTML=`<h3>📦 우리 창고</h3>
     <div class="inv" style="margin-top:8px">${GOODS.map(k=>`<div><div class="small muted">${ic(k)} ${G[k].n}${k===TYPES[team.type].spec?' · 특산품':''}</div><div class="num">${team.inv[k]||0}</div></div>`).join('')}</div>
@@ -768,7 +830,7 @@ function studentView(root,st,teamId,send){
   const incoming=mine.filter(o=>o.to===team.id&&o.status==='pending');
   const outgoing=mine.filter(o=>o.from===team.id&&o.status==='pending');
   const past=mine.filter(o=>o.status!=='pending').slice(-6).reverse();
-  const stLabel={done:'✔ 체결',rejected:'거절됨',cancelled:'취소됨',failed:'재고 부족으로 실패',expired:'시간 종료'};
+  const stLabel={done:'✔ 체결',rejected:'거절됨',cancelled:'취소됨',failed:'재고 부족으로 실패',expired:'시간 종료',undone:'↩ 선생님이 되돌림'};
   of.innerHTML=`<h3>📩 받은 제안 <span class="num muted">${incoming.length}</span></h3>
     <div style="display:flex;flex-direction:column;gap:8px;margin:8px 0 14px">${incoming.length?incoming.map(o=>{
       const after=applyTrade(team.inv,o.get,o.give), s2=scoreOf(after,team.built.length), d=s2-sc;
@@ -781,6 +843,28 @@ function studentView(root,st,teamId,send){
     <h3>📤 보낸 제안</h3>
     <div style="display:flex;flex-direction:column;gap:8px;margin:8px 0 14px">${outgoing.length?outgoing.map(o=>`<div class="offer"><div>${tname(st,o.to)}에게 · 줌 <b>${fmt(o.give)}</b> · 받음 <b>${fmt(o.get)}</b></div><div class="row"><span class="small muted grow">답을 기다리는 중</span><button data-act="cancel" data-id="${o.id}">취소</button></div></div>`).join(''):'<div class="small muted">대기 중인 제안이 없습니다.</div>'}</div>
     ${past.length?`<div class="label">최근 기록</div><div class="small" style="margin-top:4px">${past.map(o=>`<div>${o.from===team.id?'→ '+tname(st,o.to):'← '+tname(st,o.from)} · ${o.from===team.id?'줌 '+fmt(o.give)+' / 받음 '+fmt(o.get):'받음 '+fmt(o.give)+' / 줌 '+fmt(o.get)} · <span class="${o.status==='done'?'up':'muted'}">${stLabel[o.status]}</span></div>`).join('')}</div>`:''}`;
+}
+function recordHTML(st,team){
+  const r=TYPES[team.type].rate, rounds=[1,2,3,4].filter(x=>team.hist[x]);
+  const tl=teamTrades(st,team), best=bestTrade(st,team);
+  return `<div class="row" style="margin-top:10px"><label for="r-names" class="small">👥 팀원</label><input id="r-names" maxlength="60" style="flex:1 1 160px" value="${esc(team.members||'')}" placeholder="이름을 쉼표로 구분 (예: 김민준, 이서준)"><button data-act="names">저장</button></div>
+    <div class="small" style="margin:10px 0">개척민 1명이 만드는 양: ${ic('E')} 에너지 <b class="num">${+r.E.toFixed(1)}</b>개 또는 ${ic('F')} 식량 <b class="num">${+r.F.toFixed(1)}</b>개</div>
+    ${rounds.length?`<div class="scroll"><table><tr><th>라운드</th><th>발전소 일꾼</th><th>생산 ${ic('E')}</th><th>생산 ${ic('F')}</th><th>거래 후 ${ic('E')}</th><th>거래 후 ${ic('F')}</th><th>건물</th><th>점수</th><th>성장률</th></tr>
+    ${rounds.map(x=>{const h=team.hist[x];return `<tr><td>${x===4?'⚡ 보너스':x}</td><td class="num">${h.wE}명</td><td class="num">${h.pE}</td><td class="num">${h.pF}</td><td class="num">${h.E}</td><td class="num">${h.F}</td><td class="num">${builtBy(st,team,x)}</td><td class="num">${h.score}</td><td class="num">${roundGrowth(team,x)}%${x===4?' <span class="small muted">위기 대응</span>':''}</td></tr>`;}).join('')}</table></div>`:'<p class="small muted">라운드가 끝나면 여기에 기록이 자동으로 쌓입니다.</p>'}
+    <h3 style="margin-top:14px">🏅 가장 좋았던 거래</h3>
+    ${best?`<div class="small" style="margin-top:6px">${best.round===4?'보너스':best.round+'라운드'} · ${tname(st,best.other)}와 거래 · 우리가 준 것 <b>${fmt(best.gave)}</b> · 받은 것 <b>${fmt(best.got)}</b> · 점수 <b class="num ${best.d>=0?'up':'down'}">${best.d>=0?'▲':'▼'}${Math.abs(best.d)}</b></div>`:'<div class="small muted" style="margin-top:6px">아직 체결한 거래가 없습니다.</div>'}
+    ${tl.length?`<div class="label" style="margin-top:12px">우리 거래 ${tl.length}건</div><div class="small feed" style="margin-top:4px;max-height:180px">${tl.map(x=>`<div>${x.round===4?'보너스':x.round+'R'} · ${tname(st,x.other)} · 줌 ${fmt(x.gave)} / 받음 ${fmt(x.got)}${typeof x.d==='number'?` · <span class="num ${x.d>=0?'up':'down'}">${x.d>=0?'▲':'▼'}${Math.abs(x.d)}</span>`:''}</div>`).join('')}</div>`:''}`;
+}
+function draftKey(st,team){ return 'ksi-galaxy-ans-'+st.code+'-'+team.id; }
+const DRAFTS={};
+function loadDraft(st,team){ const k=draftKey(st,team); if(DRAFTS[k]) return DRAFTS[k]; let d={}; try{ d=JSON.parse(store(k)||'{}')||{}; }catch(e){} DRAFTS[k]=d; return d; }
+function saveDraft(st,team,q,v){ const d=loadDraft(st,team); d[q]=v; store(draftKey(st,team),JSON.stringify(d)); }
+function ansHTML(st,team,draft){
+  const qs=qList(st), A=team.answers||{};
+  return `<h3>✍️ 생각해 보기 <span class="small muted">팀이 함께 의논해서 제출해요</span></h3>
+    ${team.submittedAt?`<div class="small up" style="margin-top:6px">✔ ${hhmm(team.submittedAt)}에 제출했어요. 고친 뒤 다시 제출하면 새 답으로 바뀝니다.</div>`:'<div class="small muted" style="margin-top:6px">아래 📋 우리 기록을 보면서 답해 보세요.</div>'}
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:12px">${qs.map((q,i)=>`<label style="display:flex;flex-direction:column;gap:6px"><span><b>${i+1}.</b> ${q.q}</span><textarea data-q="${q.k}" rows="3" maxlength="800">${esc(draft[q.k]!=null?draft[q.k]:(A[q.k]||''))}</textarea></label>`).join('')}</div>
+    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="primary" data-act="submitans">${team.submittedAt?'고친 답 다시 제출':'📨 제출하기'}</button></div>`;
 }
 function updateCompPreview(root){
   const el=root.querySelector('[data-cprev]'); if(!el) return;
@@ -797,6 +881,7 @@ function updateCompPreview(root){
 let wTimer=null;
 function onStuInput(e,root){
   const t=e.target;
+  if(t.dataset.q){ const st=root._st, team=teamById(st,root._team); if(team) saveDraft(st,team,t.dataset.q,t.value); return; }
   if(t.id==='c-to'){ comp.to=t.value; return; }
   if(t.dataset.side){ comp[t.dataset.side][t.dataset.k]=t.value; updateCompPreview(root); }
 }
@@ -815,6 +900,16 @@ function onStuClick(e,root){
     return;
   }
   if(act==='fx'){ toggleFx(); return; }
+  if(act==='names'){ const v=(root.querySelector('#r-names')||{}).value||''; if(root.id==='stu-root'){ cl.names=v.trim(); try{ const sv=JSON.parse(store('ksi-galaxy-join')||'{}'); sv.names=v.trim(); store('ksi-galaxy-join',JSON.stringify(sv)); }catch(e){} } root._send({t:'names',v},()=>toast('👥 팀원 이름을 저장했습니다.','ok')); if(document.activeElement) document.activeElement.blur(); return; }
+  if(act==='submitans'){
+    const st=root._st, a={}; root.querySelectorAll('textarea[data-q]').forEach(x=>{ a[x.dataset.q]=x.value; });
+    const qs=qList(st), blank=qs.map((q,i)=>(a[q.k]||'').trim()?0:i+1).filter(Boolean);
+    if(blank.length===qs.length){ toast('답을 하나 이상 써 주세요.','bad'); return; }
+    if(blank.length&&root._ansArm!==true){ root._ansArm=true; setTimeout(()=>{ root._ansArm=false; },4000); toast('아직 빈 칸이 있어요('+blank.join(', ')+'번). 그대로 제출하려면 한 번 더 누르세요.','bad'); return; }
+    root._ansArm=false;
+    root._send({t:'answer',a},()=>toast('📨 선생님께 제출했습니다!','ok'));
+    return;
+  }
   if(act==='propose'){
     root._send({t:'propose',to:comp.to,give:comp.give,get:comp.get},()=>{ comp={to:comp.to,give:{},get:{}}; forceComp(root); toast('🚀 화물선이 제안을 싣고 출발했습니다.','ok'); });
   } else if(act==='accept') root._send({t:'respond',id,accept:true},()=>toast('거래가 체결되었습니다! 화물이 도착했습니다.','ok'));
@@ -851,7 +946,7 @@ function routeCurve(x,y){ const lo=Math.min(x,y), hi=Math.max(x,y), a=GX.pos[lo]
 function qpt(c,u){ return {x:(1-u)*(1-u)*c.a.x+2*(1-u)*u*c.cx+u*u*c.b.x, y:(1-u)*(1-u)*c.a.y+2*(1-u)*u*c.cy+u*u*c.b.y}; }
 function routeData(st,mode,upto){
   const m={};
-  st.trades.forEach(tr=>{
+  liveTrades(st).forEach(tr=>{
     if(mode==='round'&&tr.round!==st.round) return;
     if(upto&&tr.round>upto) return;
     const lo=Math.min(tr.from,tr.to), hi=Math.max(tr.from,tr.to), k=lo+'-'+hi;
@@ -1098,11 +1193,12 @@ function boardView(){
     <div class="teams" style="margin-top:10px">${ranked.map(({t,sc,gr},i)=>`<div class="tcard bd-${t.type}" data-id="${t.id}">
       <div class="row"><span class="dot ${online.has(t.id)?'live':''}" title="${online.has(t.id)?'접속 중':'미접속'}"></span><b class="grow">${t.id}. ${pdot(t.type)} ${t.name}</b>${rankDelta(t)}<span class="small muted">#${i+1}</span></div>
       <div class="row"><span class="num score">${sc}</span><span class="small ${gr===null?'muted':gr>=100?'up':'down'}">${gr===null?'생산 전':gr+'%'}</span></div>
-      <div class="small muted">${ic('E')}${t.inv.E} ${ic('F')}${t.inv.F}${t.built.length?' · 건물 '+t.built.length:''}${st.round===4&&t.hist[3]&&t.hist[3].rank?' · 본선 '+t.hist[3].rank+'위':''}</div></div>`).join('')}</div></div>
+      <div class="small muted">${ic('E')}${t.inv.E} ${ic('F')}${t.inv.F}${t.built.length?' · 건물 '+t.built.length:''}${st.round===4&&t.hist[3]&&t.hist[3].rank?' · 본선 '+t.hist[3].rank+'위':''}</div>${t.members?`<div class="small muted">👥 ${esc(t.members)}</div>`:''}</div>`).join('')}</div></div>
     <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
       <div class="panel"><h3>세계 총생산</h3>${ws?`<div class="num" style="font-size:24px;margin-top:6px">${ic('E')}${ws.E} &nbsp;${ic('F')}${ws.F}</div>`:'<div class="muted small">생산 확정 후 표시됩니다.</div>'}
         <div class="small muted" style="margin-top:4px">${Object.keys(st.world).map(r=>r+'R '+ic('E')+st.world[r].E+' '+ic('F')+st.world[r].F).join(' · ')}</div></div>
-      <div class="panel"><h3>방금 도착한 화물선</h3><div class="feed" style="margin-top:8px">${st.trades.slice(-12).reverse().map(tr=>`<div>${tname(st,tr.from)} ⇄ ${tname(st,tr.to)}<br><span class="small muted">${fmt(tr.give)} ↔ ${fmt(tr.get)}</span></div>`).join('')||'<div class="muted small">아직 거래가 없습니다.</div>'}</div></div>
+      <div class="panel"><h3>방금 도착한 화물선</h3><div class="feed" style="margin-top:8px">${st.trades.slice(-12).reverse().map(tr=>`<div class="${tr.undone?'undone':''}"><span>${tname(st,tr.from)} ⇄ ${tname(st,tr.to)}</span>${tr.undone?' <span class="small muted">↩ 되돌림</span>':''}${!tr.undone&&st.phase==='trade'&&tr.round===st.round?`<button class="undo-btn ${UNDO_ARM===String(tr.id)?'danger':''}" data-h="undo" data-k="${tr.id}">${UNDO_ARM===String(tr.id)?'한 번 더 누르면 되돌립니다':'↩ 되돌리기'}</button>`:''}<br><span class="small muted">${fmt(tr.give)} ↔ ${fmt(tr.get)}</span></div>`).join('')||'<div class="muted small">아직 거래가 없습니다.</div>'}</div>
+        <div class="small muted" style="margin-top:6px">잘못 체결된 거래는 이번 라운드 교역 시간 안에 ↩ 되돌리기로 취소할 수 있어요.</div></div>
     </div></div>`);
 
   if(!LOWFX&&Object.keys(oldPos).length) document.querySelectorAll('#b-mid .tcard[data-id]').forEach(el=>{
@@ -1136,9 +1232,11 @@ function howTo(){
     <li>1라운드 워프 폭풍(고립) → 2라운드 통신 재개(교환만) → 3라운드 무역 연합(특화) → 4라운드 긴급 상황 → 분석.</li>
     <li>점수 = 에너지 × 식량 × (1 + 건물 수 × 0.3). 순위는 혼자서 낼 수 있는 최고 생활지수 대비 성장률로 매깁니다.</li>
     <li>효과음은 전광판의 효과음 버튼으로 켭니다. 기기가 버벅이면 '효과 줄이기'를 누르세요.</li>
+    <li>잘못 체결된 거래는 '방금 도착한 화물선'에서 ↩ 되돌리기로 취소합니다(그 라운드 교역 시간에만).</li>
+    <li>본선 시상식부터 학생 화면에 '생각해 보기'가 열립니다. 팀별 답은 분석 화면 ⑥ 생각 나누기에서 보고, '📥 결과 내려받기'로 기록과 답을 엑셀 파일 하나로 받으세요.</li>
     <li>라운드마다 ⏱ 타이머를 켤 수 있습니다. 3라운드가 끝나면 🏆 본선 시상식으로 최종 순위가 확정되고, 시간이 있으면 ⚡ 보너스 라운드(사건) → 🛡️ 위기 대응 시상 → 분석으로, 없으면 바로 분석으로 갑니다.</li></ol></div>`;
 }
-let resetArmed=false, resumeAsk=false;
+let resetArmed=false, resumeAsk=false, UNDO_ARM=null, UNDO_T=null, ANSQ='q1', ANS_ANON=false;
 function onBoardClick(e){
   const b=e.target.closest('[data-h]'); if(!b||!app.contains(b)) return;
   const h=b.dataset.h;
@@ -1151,6 +1249,21 @@ function onBoardClick(e){
   if(h==='netplay'){ clearTimeout(NET_PLAY); const seq=['1','2','3','4']; let i=0; const step=()=>{ NETR=seq[i]; NET_ANIM=true; boardView(); i++; if(i<seq.length) NET_PLAY=setTimeout(step,1800); }; step(); return; }
   if(h==='timer'){ const sel=document.getElementById('h-tm'); TIMER_MIN=Number(sel&&sel.value)||3; store('ksi-galaxy-timer',String(TIMER_MIN)); hostAction({t:'timer',m:TIMER_MIN}); commit(); tickTimers(); return; }
   if(h==='timerstop'){ hostAction({t:'timer',m:0}); commit(); return; }
+  if(h==='undo'){
+    const k=b.dataset.k;
+    if(UNDO_ARM!==k){ UNDO_ARM=k; clearTimeout(UNDO_T); UNDO_T=setTimeout(()=>{ UNDO_ARM=null; if(S.phase==='trade') boardView(); },4000); boardView(); return; }
+    UNDO_ARM=null; clearTimeout(UNDO_T);
+    const err=hostAction({t:'undo',k}); if(err) toast(err,'bad'); else toast('↩ 거래를 되돌렸습니다. 두 행성의 창고가 거래 전으로 돌아갔어요.','ok');
+    commit(); return;
+  }
+  if(h==='anon'){ ANS_ANON=!ANS_ANON; boardView(); return; }
+  if(h==='ansq'){ ANSQ=b.dataset.k; boardView(); return; }
+  if(h==='ansbig'){
+    const t=teamById(S,Number(b.dataset.k)), qs=qList(S), qi=qs.findIndex(q=>q.k===ANSQ); if(!t||!t.answers||!t.answers[ANSQ]) return;
+    showCine(`<div class="ci-round">질문 ${qi+1}</div><p style="margin-top:8px">${qs[qi].q}</p><div class="ans-big">${esc(t.answers[ANSQ])}</div><div class="ci-tag" style="margin-top:18px">${ANS_ANON?'익명 팀':esc(t.id+'. '+t.name)}</div>`,'',600000);
+    return;
+  }
+  if(h==='export'){ exportResults(); return; }
   if(h==='reset'){
     if(!resetArmed){ resetArmed=true; b.textContent='정말 초기화? 한 번 더 누르세요'; setTimeout(()=>{resetArmed=false;},3000); return; }
     resetArmed=false; previewTeam=null;
@@ -1175,9 +1288,10 @@ function localSend(teamId){
 function analysisView(){
   const st=S;
   const tab=st.atab||'cap';
-  const tabs=[['cap','① 행성 능력 공개'],['life','② 라운드별 변화'],['terms','③ 교역 조건'],['spec','④ 특화 점검'],['net','⑤ 교역망']];
+  const nSub=st.teams.filter(t=>t.submittedAt).length;
+  const tabs=[['cap','① 행성 능력 공개'],['life','② 라운드별 변화'],['terms','③ 교역 조건'],['spec','④ 특화 점검'],['net','⑤ 교역망'],['ans',`⑥ 생각 나누기 (${nSub}/${st.teams.length})`]];
   let h=`<div class="panel row"><div class="tabs grow">${tabs.map(([k,n])=>`<button data-h="atab" data-k="${k}" class="${tab===k?'on':''}">${n}</button>`).join('')}</div>
-    <button data-h="awards">🏆 본선 시상식</button>${st.teams.some(t=>t.hist[4])?'<button data-h="bawards">🛡️ 위기 대응 시상</button>':''}<button data-h="back">전광판으로</button></div><div class="panel">`;
+    <button data-h="awards">🏆 본선 시상식</button>${st.teams.some(t=>t.hist[4])?'<button data-h="bawards">🛡️ 위기 대응 시상</button>':''}<button data-h="export">📥 결과 내려받기</button><button data-h="back">전광판으로</button></div><div class="panel">`;
   const types=[...new Set(st.teams.map(t=>t.type))];
   if(tab==='cap'){
     h+=`<h2>각 행성은 무엇을 잘했을까?</h2><p class="muted">개척민 1명이 하루에 만드는 양과, 하나를 만들 때 포기한 다른 자원(기회비용)입니다.</p>
@@ -1209,7 +1323,7 @@ function analysisView(){
         </ol></div>`; }
   }
   if(tab==='terms'){
-    const pts=st.trades.map(tr=>{
+    const pts=liveTrades(st).map(tr=>{
       const a=tr.give,b=tr.get;
       const only=(o,k)=>GOODS.every(g=>g===k||!o[g]);
       if(only(a,'E')&&only(b,'F')&&a.E&&b.F) return {r:b.F/a.E,tr};
@@ -1231,7 +1345,72 @@ function analysisView(){
       <p class="small muted" style="margin-top:10px">비교우위가 있는 자원 쪽으로 기운 행성일수록 성장률이 높았나요?</p>`;
   }
   if(tab==='net') h+=netView(st,types);
+  if(tab==='ans') h+=ansBoard(st);
   return h+'</div>';
+}
+function ansBoard(st){
+  const qs=qList(st); if(!qs.find(q=>q.k===ANSQ)) ANSQ='q1';
+  const sub=st.teams.filter(t=>t.submittedAt), not=st.teams.filter(t=>!t.submittedAt);
+  const qi=qs.findIndex(x=>x.k===ANSQ), q=qs[qi];
+  const list=sub.filter(t=>t.answers&&t.answers[ANSQ]);
+  return `<div class="row"><h2 class="grow">우리 생각 나누기</h2><span>제출 <b class="num">${sub.length}</b> / ${st.teams.length}팀</span><button data-h="anon" class="${ANS_ANON?'on':''}">${ANS_ANON?'🙈 팀 이름 숨김':'👀 팀 이름 보임'}</button></div>
+    ${not.length?`<p class="small muted">아직 제출하지 않은 팀: ${not.map(t=>t.id+'번').join(', ')}</p>`:'<p class="small up">모든 팀이 제출했습니다.</p>'}
+    <div class="tabs" style="margin:10px 0">${qs.map((x,i)=>`<button data-h="ansq" data-k="${x.k}" class="${x.k===ANSQ?'on':''}">질문 ${i+1}</button>`).join('')}</div>
+    <p style="font-size:18px;margin:8px 0 14px"><b>${qi+1}. ${q.q}</b></p>
+    <div class="anscards">${list.map(t=>`<button class="anscard bd-${t.type}" data-h="ansbig" data-k="${t.id}"><span class="small ${ANS_ANON?'muted':'tag-'+t.type}">${ANS_ANON?'익명 팀':esc(t.id+'. '+t.name)}</span><span>${esc(t.answers[ANSQ])}</span></button>`).join('')||'<p class="muted">이 질문에 제출된 답이 아직 없습니다.</p>'}</div>
+    <p class="small muted" style="margin-top:12px">답을 누르면 화면에 크게 띄웁니다. 모든 기록과 답은 위의 '📥 결과 내려받기'로 엑셀 파일 하나에 담아 받을 수 있어요.</p>`;
+}
+/* ===================== 결과 내려받기 ===================== */
+function exportRows(st){
+  const rounds=[1,2,3,4].filter(r=>st.teams.some(t=>t.hist[r]));
+  const lab=r=>r===4?'보너스':r+'R';
+  const recH=['팀 번호','팀 이름','행성','팀원'];
+  rounds.forEach(r=>recH.push(lab(r)+' 발전소 일꾼',lab(r)+' 생산 에너지',lab(r)+' 생산 식량',lab(r)+' 거래 후 에너지',lab(r)+' 거래 후 식량',lab(r)+' 건물 수',lab(r)+' 점수',r===4?'보너스 위기 대응(%)':lab(r)+' 성장률(%)'));
+  recH.push('본선 순위','교역 횟수','지은 건물');
+  const records=[recH].concat(st.teams.map(t=>{
+    const row=[t.id,t.name,TYPES[t.type].n,t.members||''];
+    rounds.forEach(r=>{ const h=t.hist[r]; row.push(...(h?[h.wE,h.pE,h.pF,h.E,h.F,builtBy(st,t,r),h.score,roundGrowth(t,r)]:['','','','','','','',''])); });
+    row.push(t.hist[3]&&t.hist[3].rank?t.hist[3].rank:'',teamTrades(st,t).length,t.built.map(m=>MISSIONS[m]?MISSIONS[m].n:m).join(', '));
+    return row;
+  }));
+  const qs=qList(st);
+  const answers=[['팀 번호','팀 이름','팀원','제출 시각'].concat(qs.map((q,i)=>(i+1)+'. '+q.q))].concat(st.teams.map(t=>[t.id,t.name,t.members||'',t.submittedAt?hhmm(t.submittedAt):'미제출'].concat(qs.map(q=>(t.answers&&t.answers[q.k])||''))));
+  const nm=id=>{ const t=teamById(st,id); return t?t.id+'. '+t.name:id; };
+  const trades=[['라운드','제안한 팀','받은 팀','제안 팀이 준 것','제안 팀이 받은 것','제안 팀 점수 변화','받은 팀 점수 변화','상태']].concat((st.trades||[]).map(tr=>[lab(tr.round),nm(tr.from),nm(tr.to),goodsText(tr.give),goodsText(tr.get),tr.dFrom==null?'':tr.dFrom,tr.dTo==null?'':tr.dTo,tr.undone?'교사가 되돌림':'체결']));
+  const builds=[['라운드','팀','건물']].concat((st.buildLog||[]).map(b=>[lab(b.round),nm(b.team),MISSIONS[b.m]?MISSIONS[b.m].n:b.m]));
+  return {records,answers,trades,builds};
+}
+let XLSX_P=null;
+function loadXlsx(){
+  if(window.XLSX) return Promise.resolve(window.XLSX);
+  if(!XLSX_P) XLSX_P=new Promise((ok,no)=>{
+    const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    const fail=()=>{ XLSX_P=null; no(new Error('xlsx')); };
+    s.onload=()=>window.XLSX?ok(window.XLSX):fail(); s.onerror=fail; document.head.appendChild(s);
+    setTimeout(()=>{ if(!window.XLSX) fail(); },15000);
+  });
+  return XLSX_P;
+}
+function saveBlob(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); }
+async function exportResults(){
+  const st=S, d=new Date(), base='galaxy-trade_'+d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'_'+pad2(d.getHours())+pad2(d.getMinutes())+'_room'+st.code;
+  const R=exportRows(st);
+  toast('결과 파일을 만드는 중…');
+  try{
+    const X=await loadXlsx(), wb=X.utils.book_new();
+    [['생각해 보기',R.answers],['팀별 기록',R.records],['거래 내역',R.trades],['건설',R.builds]].forEach(([n,rows])=>{
+      const ws=X.utils.aoa_to_sheet(rows);
+      ws['!cols']=rows[0].map((h,i)=>({wch:n==='생각해 보기'&&i>=4?60:i===1||i===2&&n!=='팀별 기록'?18:i===3&&n==='팀별 기록'?20:12}));
+      X.utils.book_append_sheet(wb,ws,n);
+    });
+    X.writeFile(wb,base+'.xlsx');
+    toast('📥 엑셀 파일을 내려받았습니다. 시트 4개(생각해 보기 · 팀별 기록 · 거래 내역 · 건설)가 들어 있어요.','ok');
+  }catch(e){
+    const cell=c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"';
+    const csv=[['[생각해 보기]'],...R.answers,[],['[팀별 기록]'],...R.records,[],['[거래 내역]'],...R.trades,[],['[건설]'],...R.builds].map(r=>r.map(cell).join(',')).join('\r\n');
+    saveBlob(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}),base+'.csv');
+    toast('엑셀 도구를 불러오지 못해 CSV 파일로 내려받았습니다. 엑셀에서 그대로 열 수 있어요.','ok');
+  }
 }
 let NETR='4', NET_ANIM=false, NET_PLAY=null;
 function netView(st,types){
@@ -1240,7 +1419,7 @@ function netView(st,types){
   if(types.length===3){ P[types[0]]=[140,270]; P[types[1]]=[330,80]; P[types[2]]=[520,270]; }
   if(types.length===2){ P[types[0]]=[170,200]; P[types[1]]=[490,200]; }
   const pair={}, self={}, perRound={1:0,2:0,3:0,4:0};
-  st.trades.forEach(tr=>{
+  liveTrades(st).forEach(tr=>{
     perRound[tr.round]=(perRound[tr.round]||0)+1;
     if(tr.round>upto) return;
     const a=teamById(st,tr.from), b=teamById(st,tr.to); if(!a||!b) return;
@@ -1274,7 +1453,7 @@ function awardsData(st,bonus){
     const harmed=harmedTypes(st.eventsAt&&st.eventsAt[4]);
     const hs=ts.filter(t=>harmed.has(t.type)).sort((a,b)=>b.hist[4].crisis-a.hist[4].crisis)[0];
     if(hs) out.push({icon:'💪',title:'위기 극복상',t:hs,v:'사건 피해 속 '+hs.hist[4].crisis+'%'});
-    const cnt={}; st.trades.filter(tr=>tr.round===4).forEach(tr=>{ cnt[tr.from]=(cnt[tr.from]||0)+1; cnt[tr.to]=(cnt[tr.to]||0)+1; });
+    const cnt={}; liveTrades(st).filter(tr=>tr.round===4).forEach(tr=>{ cnt[tr.from]=(cnt[tr.from]||0)+1; cnt[tr.to]=(cnt[tr.to]||0)+1; });
     const tk=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
     if(tk) out.push({icon:'🤝',title:'위기 속 최다 교역',t:teamById(st,Number(tk)),v:'보너스 라운드 교역 '+cnt[tk]+'회'});
     return out;
@@ -1284,7 +1463,7 @@ function awardsData(st,bonus){
   const fin=t=>t.hist[R]?t.hist[R].score:0;
   const g=[...st.teams].sort((a,b)=>fin(b)/baseLine(b)-fin(a)/baseLine(a))[0];
   if(g) out.push({icon:'🏆',title:'최고 성장 식민지',t:g,v:'자급자족 최고 대비 '+Math.round(fin(g)/baseLine(g)*100)+'%'});
-  const cnt={}; st.trades.filter(tr=>tr.round<=3).forEach(tr=>{ cnt[tr.from]=(cnt[tr.from]||0)+1; cnt[tr.to]=(cnt[tr.to]||0)+1; });
+  const cnt={}; liveTrades(st).filter(tr=>tr.round<=3).forEach(tr=>{ cnt[tr.from]=(cnt[tr.from]||0)+1; cnt[tr.to]=(cnt[tr.to]||0)+1; });
   const tk=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
   if(tk) out.push({icon:'🚀',title:'최다 교역 식민지',t:teamById(st,Number(tk)),v:'교역 '+cnt[tk]+'회'});
   const fb=(st.buildLog||[]).find(b=>b.round<=3);
@@ -1441,13 +1620,16 @@ function joinView(msg){
     <div class="panel" style="margin-top:20px;text-align:left;display:flex;flex-direction:column;gap:12px">
       <label for="j-code">방 코드 (전광판의 4자리)</label><input id="j-code" inputmode="numeric" maxlength="4" value="${sv.code||''}" class="num" style="font-size:24px;letter-spacing:.2em">
       <label for="j-team">우리 팀 번호</label><input id="j-team" type="number" min="1" value="${sv.team||''}" class="num" style="width:100%;font-size:24px">
+      <label for="j-names">팀원 이름</label><input id="j-names" maxlength="60" value="${esc(sv.names||'')}" placeholder="예: 김민준, 이서준">
       <button class="primary" id="j-go">🚀 행성에 착륙하기</button>
       <div class="small ${msg?'down':'muted'}" id="j-msg">${msg||'같은 팀 두 명이 한 기기를 함께 씁니다.'}</div>
     </div></div></div>`;
   $('#j-go').onclick=()=>{
-    const code=$('#j-code').value.trim(), team=Number($('#j-team').value);
+    const code=$('#j-code').value.trim(), team=Number($('#j-team').value), names=$('#j-names').value.trim();
     if(!/^\d{4}$/.test(code)||!team){ $('#j-msg').textContent='방 코드 4자리와 팀 번호를 입력하세요.'; return; }
-    store('ksi-galaxy-join',JSON.stringify({code,team}));
+    if(!names){ $('#j-msg').textContent='제출 기록에 남도록 팀원 이름을 입력하세요.'; $('#j-msg').className='small down'; return; }
+    store('ksi-galaxy-join',JSON.stringify({code,team,names}));
+    cl.names=names;
     connect(code,team);
   };
 }
@@ -1490,6 +1672,8 @@ function connect(code,team){
           const raw=s.val(); if(!raw) return;
           let st; try{ st=JSON.parse(raw); }catch(e){ return; }
           const prev=cl.st; cl.st=st; renderClient(); clientCine(prev,st);
+          const me=teamById(st,cl.team);
+          if(me&&cl.names&&!cl.namesSent&&!me.members){ cl.namesSent=true; clientSend({t:'names',v:cl.names}); }
         });
         return;
       }
@@ -1500,6 +1684,8 @@ function connect(code,team){
   }).catch(e=>fail('① 연결 서버에 접근하지 못했습니다('+(e.code||e.message)+').'));
 }
 function clientCine(prev,st){
+  if(POST.includes(st.phase)&&(!prev||!POST.includes(prev.phase))) setTimeout(()=>toast('✍️ 생각해 보기가 열렸습니다. 팀이 함께 답을 써서 제출하세요.','ok'),1200);
+  if(prev&&prev.trades) st.trades.forEach((t,i)=>{ const p=prev.trades[i]; if(t.undone&&p&&!p.undone&&(t.from===cl.team||t.to===cl.team)) toast('↩ 선생님이 '+(t.from===cl.team?tname(st,t.to).replace(/<[^>]+>/g,'').trim():tname(st,t.from).replace(/<[^>]+>/g,'').trim())+'와의 거래를 되돌렸습니다.','bad'); });
   if(st.phase==='awards'){ if(!prev||prev.phase!=='awards') showCine(`<div class="ci-round">FINAL</div><h2>🏆 본선 시상식</h2><p>1~3라운드 기록으로 최종 순위가 확정되었습니다.</p>${awardsCards(st,false)}`,'',20000,CINE.cine_round3); return; }
   if(st.phase==='bawards'){ if(!prev||prev.phase!=='bawards') showCine(`<div class="ci-round">BONUS</div><h2>🛡️ 위기 대응 시상</h2>${awardsCards(st,true)}`,'',20000,CINE.cine_round4); return; }
   if(st.phase==='lobby'||st.phase==='analysis'||!st.round) return;
