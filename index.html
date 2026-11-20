@@ -110,6 +110,13 @@ body.lowfx .steam{opacity:.35}
 .landing .choices button{padding:16px 26px;font-size:17px}
 .planet-row{display:flex;gap:clamp(8px,3vw,28px);justify-content:center;flex-wrap:wrap;margin-bottom:18px}
 .credit{margin-top:32px;font-size:13px;color:var(--mute)}
+.dbline{margin-top:16px;font-size:13px;color:var(--mute);display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
+.dbline b{color:var(--signal)}
+.dbline button{padding:4px 10px;font-size:12px}
+.dbpanel{margin:14px auto 0;max-width:520px;text-align:left;display:flex;flex-direction:column;gap:8px}
+.dbpanel textarea{width:100%;min-height:64px;font-size:13px}
+.dbtag{display:inline-block;margin-top:4px;font-size:12px;color:var(--signal);border:1px solid var(--signal);border-radius:999px;padding:1px 8px}
+.code-box .copy{margin-top:4px;padding:3px 10px;font-size:12px}
 
 /* 전광판 */
 .board-top{display:flex;gap:16px;flex-wrap:wrap;align-items:stretch}
@@ -370,7 +377,7 @@ button.wk:hover svg{filter:drop-shadow(0 0 4px #fff)}
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='v1.6.1';
+const VERSION='v1.8';
 /* ===================== 게임 데이터 ===================== */
 const WORKERS = 12;
 const GOODS = ['E','F','crystal','pearl','chip','core'];
@@ -1565,7 +1572,9 @@ function boardView(){
       <div style="color:var(--signal);font-family:var(--f-display);font-size:20px;margin-top:4px">${phaseLabel(st)}</div>
       ${R&&!['analysis','awards','bawards'].includes(st.phase)?`<div style="margin-top:4px">${R.icon} <b>${R.tag}</b> <span class="muted">· ${R.story}</span></div>`:''}</div>
     <div class="code-box"><div class="label">방 코드</div><div class="num">${st.code}</div>
-      <div class="small muted" style="max-width:260px;word-break:break-all">${joinUrl}</div>
+      ${DB_CUSTOM?`<div class="dbtag">🔗 내 데이터베이스 · ${esc(dbName(DB_CUSTOM))}</div>`:''}
+      <div class="small muted" style="max-width:260px;word-break:break-all">${DB_CUSTOM?'학생 참가 링크: ':''}${joinUrl}</div>
+      <button class="copy" data-h="copylink">📋 참가 링크 복사</button>
       <div class="small" data-net>${netStatus}</div></div>
   </div>`);
   const main=['b-ctrl','b-note','b-gx','b-mid','b-pv'];
@@ -1685,6 +1694,8 @@ function onBoardClick(e){
   const b=e.target.closest('[data-h]'); if(!b||!app.contains(b)) return;
   const h=b.dataset.h;
   if(h==='resume'){ resumeAsk=false; boardView(); return; }
+  if(h==='copylink'){ const u=location.href.split('#')[0]+'#join'; const done=()=>toast('학생 참가 링크를 복사했습니다. 구글 클래스룸 등에 붙여 넣으세요.','ok');
+    try{ navigator.clipboard.writeText(u).then(done,()=>{ prompt('이 링크를 복사하세요',u); }); }catch(err){ prompt('이 링크를 복사하세요',u); } return; }
   if(h==='fresh'){ resumeAsk=false; previewTeam=null; STEP_UNDO=[]; S=newState(S.code); commit(); return; }
   if(h==='sound'){ SOUND=!SOUND; store('ksi-galaxy-sound',SOUND?'1':'0'); if(SOUND){ ac(); sfx('trade'); } boardView(); return; }
   if(h==='fx'){ toggleFx(); boardView(); return; }
@@ -1986,11 +1997,29 @@ const FIREBASE_CONFIG = {
 };
 const ROOM_TTL = 6*3600*1000;           // 6시간 넘게 신호가 없는 방은 빈 방으로 봄
 let FB=null;
-function fbConfigured(){ return !!(FIREBASE_CONFIG.apiKey && !/여기/.test(FIREBASE_CONFIG.apiKey) && FIREBASE_CONFIG.databaseURL); }
+/* v1.8 선생님 본인 데이터베이스: 주소 뒤 ?db=… 가 있으면 그 Realtime Database로 연결한다 */
+function dbNormalize(v){
+  v=String(v||'').trim(); const m=v.match(/databaseURL\s*:\s*["']([^"']+)["']/); if(m) v=m[1];
+  const full=/^https?:\/\//i.test(v);
+  let h=v.replace(/^https?:\/\//i,'').split(/[\/?#\s]/)[0].toLowerCase(); if(!h) return null;
+  if(!/\.(firebasedatabase\.app|firebaseio\.com)$/.test(h)){ if(full) return null; }
+  if(!/\.(firebasedatabase\.app|firebaseio\.com)$/.test(h)) h=h.includes('.')?h+'.firebasedatabase.app':h+'.firebaseio.com';
+  return /^[a-z0-9-]+(\.[a-z0-9-]+)*\.(firebasedatabase\.app|firebaseio\.com)$/.test(h)?'https://'+h:null;
+}
+function dbName(u){ return dbShort(u).split('.')[0].replace(/-default-rtdb$/,''); }
+function dbShort(u){ return u.replace(/^https:\/\//,'').replace(/\.firebasedatabase\.app$/,'').replace(/\.firebaseio\.com$/,''); }
+const DB_Q=(()=>{ try{ return new URLSearchParams(location.search).get('db')||''; }catch(e){ return ''; } })();
+const DB_CUSTOM=DB_Q?dbNormalize(DB_Q):null;
+const DB_BAD=!!DB_Q&&!DB_CUSTOM;
+function dbSaved(){ return dbNormalize(store('ksi-galaxy-db')||''); }
+function baseUrl(){ return location.href.split('#')[0].split('?')[0]; }
+function dbLink(u,hash){ return baseUrl()+(u?'?db='+encodeURIComponent(dbShort(u)):'')+(hash?'#'+hash:''); }
+function fbConfigured(){ if(DB_CUSTOM) return true; return !!(FIREBASE_CONFIG.apiKey && !/여기/.test(FIREBASE_CONFIG.apiKey) && FIREBASE_CONFIG.databaseURL); }
+function fbOptions(){ return DB_CUSTOM?{databaseURL:DB_CUSTOM,projectId:dbName(DB_CUSTOM).replace(/-default-rtdb$/,'')}:FIREBASE_CONFIG; }
 function fbDb(){
   if(FB) return FB;
   if(typeof firebase==='undefined'||!fbConfigured()) return null;
-  try{ if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG); FB=firebase.database(); }catch(e){ console.error(e); FB=null; }
+  try{ if(!firebase.apps.length) firebase.initializeApp(fbOptions()); FB=firebase.database(); }catch(e){ console.error(e); FB=null; }
   return FB;
 }
 function rid8(){ return Math.random().toString(36).slice(2,10); }
@@ -2008,7 +2037,38 @@ function commit(){
   boardView();
   clearTimeout(bTimer); bTimer=setTimeout(publishState,60);
 }
-function publishState(){ if(roomRef) roomRef.child('state').set(JSON.stringify(S)).catch(e=>setNet('⚠ 저장 실패('+(e.code||e.message)+'). 데이터베이스 규칙을 확인하세요.')); }
+/* v1.7 전송량 절감: 상태를 조각(배열은 원소별)으로 나눠 바뀐 조각만 보낸다. 학생 기기는 바뀐 조각만 내려받는다. */
+let pubMode='chunk', pubLast=null, pubRoom='';
+function stateChunks(o){ const m={}; Object.keys(o).forEach(k=>{ const v=o[k]; if(v===undefined) return;
+  if(Array.isArray(v)){ m[k+'~n']=String(v.length); v.forEach((x,i)=>{ m[k+'~'+i]=JSON.stringify(x===undefined?null:x); }); }
+  else m[k]=JSON.stringify(v); }); return m; }
+function stateFromRaw(raw){
+  if(typeof raw==='string') return JSON.parse(raw);
+  const o={}, arr={};
+  Object.keys(raw).forEach(k=>{ const i=k.indexOf('~');
+    if(i<0){ o[k]=JSON.parse(raw[k]); return; }
+    const b=k.slice(0,i), j=k.slice(i+1), a=arr[b]||(arr[b]={n:0,v:{}});
+    if(j==='n') a.n=Number(raw[k])||0; else a.v[j]=JSON.parse(raw[k]); });
+  Object.keys(arr).forEach(b=>{ const a=arr[b]; o[b]=Array.from({length:a.n},(_,i)=>a.v[i]===undefined?null:a.v[i]); });
+  return o;
+}
+function pubFail(e){
+  pubLast=null;
+  if(pubMode==='chunk'&&/permission/i.test((e&&(e.code||e.message))||'')){ pubMode='full'; publishState(); return; }
+  setNet('⚠ 저장 실패('+(e.code||e.message)+'). 데이터베이스 규칙을 확인하세요.');
+}
+function publishState(){
+  if(!roomRef) return;
+  const ref=roomRef.child('state');
+  if(pubMode==='full'){ ref.set(JSON.stringify(S)).catch(pubFail); return; }
+  const m=stateChunks(S), rk=roomRef.toString();
+  if(!pubLast||pubRoom!==rk){ pubLast=m; pubRoom=rk; ref.set(m).catch(pubFail); return; }
+  const up={}; let n=0;
+  for(const k in m) if(pubLast[k]!==m[k]){ up[k]=m[k]; n++; }
+  for(const k in pubLast) if(!(k in m)){ up[k]=null; n++; }
+  pubLast=m;
+  if(n) ref.update(up).catch(pubFail);
+}
 function startHost(){
   let saved=null; try{ saved=JSON.parse(store('ksi-galaxy-host')||'null'); }catch(e){}
   S=saved&&saved.code?saved:newState(newCode());
@@ -2081,6 +2141,7 @@ function joinView(msg){
       <label for="j-names">팀원 이름</label><input id="j-names" maxlength="60" value="${esc(sv.names||'')}" placeholder="예: 김민준, 이서준">
       <button class="primary" id="j-go">🚀 행성에 착륙하기</button>
       <div class="small ${msg?'down':'muted'}" id="j-msg">${msg||'같은 팀 두 명이 한 기기를 함께 씁니다.'}</div>
+      ${DB_CUSTOM?`<div class="small muted">🔗 연결: 선생님 데이터베이스 · ${esc(dbName(DB_CUSTOM))}</div>`:''}
     </div></div></div>`;
   $('#j-go').onclick=()=>{
     const code=$('#j-code').value.trim(), team=Number($('#j-team').value), names=$('#j-names').value.trim();
@@ -2109,7 +2170,7 @@ function connect(code,team){
   room.child('meta').once('value').then(s=>{
     if(done) return;
     const m=s.val();
-    if(!m||Date.now()-(m.t||0)>ROOM_TTL) return fail('② 방 '+code+'을(를) 찾지 못했습니다. 방 코드가 맞는지, 선생님 전광판에 "🟢 학생 접속 가능"이 떠 있는지 확인하세요.');
+    if(!m||Date.now()-(m.t||0)>ROOM_TTL) return fail('② 방 '+code+'을(를) 찾지 못했습니다. 방 코드가 맞는지, 선생님 전광판에 "🟢 학생 접속 가능"이 떠 있는지, 선생님이 준 참가 링크로 들어왔는지 확인하세요.');
     clearTimeout(timer);
     setJoinMsg('② 방 '+code+'에 착륙 허가를 요청하는 중…');
     timer=setTimeout(()=>fail('③ 방 '+code+'의 전광판이 응답하지 않습니다. 선생님 전광판 화면이 열려 있는지 확인하세요.'),15000);
@@ -2128,7 +2189,7 @@ function connect(code,team){
         });
         room.child('state').on('value',s=>{
           const raw=s.val(); if(!raw) return;
-          let st; try{ st=JSON.parse(raw); }catch(e){ return; }
+          let st; try{ st=stateFromRaw(raw); }catch(e){ return; }
           const prev=cl.st; cl.st=st; renderClient(); clientCine(prev,st);
           const me=teamById(st,cl.team);
           if(me&&cl.names&&!cl.namesSent&&!me.members){ cl.namesSent=true; clientSend({t:'names',v:cl.names}); }
@@ -2184,9 +2245,34 @@ function landing(){
     <h1>식민지 개척단<br>은하 무역 연합</h1>
     <div class="sub" style="margin-top:10px">네 개의 행성, 하나의 은하 시장</div>
     <div class="choices"><button class="primary" id="go-join">🚀 학생으로 참가</button><button id="go-host">🛰️ 교사 전광판 열기</button></div>
+    ${dbLineHTML()}
     <div class="credit">제작: <img class="slogo" src="${IMG.logo}" alt="신성고 교표">신성고 사회과 교사 이석현 · ${VERSION}<br><span class="lic">교육용 무료 사용 · 출처 표시 · 상업적 이용 금지</span><br>이미지: Google Gemini로 생성</div></div></div>`;
   $('#go-join').onclick=()=>{ location.hash='join'; };
-  $('#go-host').onclick=()=>{ location.hash='host'; };
+  $('#go-host').onclick=()=>{ const sv=dbSaved(); if(!DB_Q&&sv){ location.href=dbLink(sv,'host'); return; } location.hash='host'; };
+  wireDb();
+}
+function dbLineHTML(){
+  const sv=dbSaved();
+  let line;
+  if(DB_BAD) line=`<span class="down">⚠ 주소의 데이터베이스 정보(db=${esc(DB_Q)})를 알아볼 수 없습니다. 선생님께 받은 링크를 다시 확인하세요.</span>`;
+  else if(DB_CUSTOM) line=`🔗 연결: <b>선생님 데이터베이스 · ${esc(dbName(DB_CUSTOM))}</b>`;
+  else line=`🔗 연결: 기본 서버${sv?` · <span class="muted">교사 전광판은 저장된 내 데이터베이스(${esc(dbName(sv))})로 열립니다</span>`:''}`;
+  return `<div class="dbline">${line}<button id="db-open">⚙️ 내 Firebase 연결</button></div>
+    <div class="panel dbpanel" id="db-panel" hidden>
+      <b>내 Firebase 데이터베이스로 수업하기 (교사용)</b>
+      <div class="small muted">Firebase 콘솔 → Realtime Database 맨 위의 주소(https://…firebasedatabase.app)나 firebaseConfig 블록 전체를 붙여 넣으세요. 저장하면 이 기기에서 여는 교사 전광판과 학생 참가 링크가 이 데이터베이스를 씁니다.</div>
+      <textarea id="db-in" placeholder="https://내프로젝트-default-rtdb.asia-southeast1.firebasedatabase.app">${esc(sv||DB_CUSTOM||'')}</textarea>
+      <div class="small" id="db-msg"></div>
+      <div class="row"><button class="primary" id="db-save">저장하고 교사 전광판 열기</button><button id="db-reset">기본 서버로 되돌리기</button></div>
+    </div>`;
+}
+function wireDb(){
+  const p=$('#db-panel'); if(!p) return;
+  $('#db-open').onclick=()=>{ p.hidden=!p.hidden; };
+  $('#db-save').onclick=()=>{ const u=dbNormalize($('#db-in').value); const m=$('#db-msg');
+    if(!u){ m.textContent='주소를 알아볼 수 없습니다. https://로 시작하고 firebasedatabase.app 또는 firebaseio.com으로 끝나는 주소인지 확인하세요.'; m.className='small down'; return; }
+    store('ksi-galaxy-db',u); location.href=dbLink(u,'host'); };
+  $('#db-reset').onclick=()=>{ try{ localStorage.removeItem('ksi-galaxy-db'); }catch(e){} location.href=baseUrl(); };
 }
 function route(){
   const h=location.hash.replace('#','');
