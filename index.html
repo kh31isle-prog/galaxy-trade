@@ -352,7 +352,57 @@ button.wk:hover svg{filter:drop-shadow(0 0 4px #fff)}
 .wk.busy svg{animation:bob 1s ease-in-out infinite}
 .wk:nth-child(2n) svg{animation-delay:-.5s}
 @keyframes bob{50%{transform:translateY(-3px)}}
-.zprod{font-size:24px;line-height:1.1}
+.zprod{font-size:40px;line-height:1.05;font-weight:800;font-family:var(--f-num,ui-monospace),monospace}
+.zrate{font-size:15px;color:var(--muted)}.zrate b{color:var(--ink,#fff);font-size:17px}
+.idlebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;background:#0b0f1d8c;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-size:15px}
+.idlebar .idlelab{font-size:17px}.idlebar .idlelab b{font-size:22px;color:var(--signal)}
+.idlebar .idlewk{display:flex;flex-wrap:wrap;gap:2px}.idlebar .wk.idle{opacity:.45;filter:grayscale(1)}
+.lifeq{display:flex;align-items:center;justify-content:center;gap:16px;background:#0b0f1d;border:2px solid var(--signal);border-radius:14px;padding:10px 14px;margin-top:12px;flex-wrap:wrap}
+.lifeq .t{text-align:center}.lifeq .t small{display:block;color:var(--muted);font-size:14px}
+.lifeq .n{font-size:44px;font-weight:800;font-family:var(--f-num,ui-monospace),monospace;line-height:1.1}
+.lifeq .n.e{color:#ffd34d}.lifeq .n.f{color:#6ee08a}.lifeq .n.l{color:var(--signal)}.lifeq .op{font-size:34px;color:var(--muted)}
+.lchart{margin-top:12px;background:#0b0f1d8c;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.lch b{font-size:16px}
+.lbars{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;height:130px;margin-top:22px;align-items:end}
+.lb{position:relative;height:100%;display:flex;align-items:flex-end;padding:0;background:none;border:0;border-radius:4px 4px 0 0;min-width:0}
+.lb .lbb{display:block;width:100%;background:#4a568f;border-radius:4px 4px 0 0}
+.lb.none{border:1px dashed var(--line);border-bottom:0}
+.lb .lbv{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 2px);font-size:12px;color:var(--muted);white-space:nowrap;font-family:var(--f-num,ui-monospace),monospace}
+.lb.none .lbv{bottom:40%;opacity:.5}
+.lb.cur .lbb{background:var(--signal)}.lb.cur .lbv{color:var(--signal);font-weight:800;font-size:14px}
+.lb.best .lbb{box-shadow:0 0 0 2px #6ee08a inset}
+.lxl{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;font-size:12px;color:var(--muted);text-align:center;margin-top:3px}
+.lhint{margin-top:8px;font-size:15px}.lcap{margin-top:6px;font-size:13px;color:var(--signal)}
+.concl{background:linear-gradient(90deg,#2a2350,#151b36);border-left:5px solid var(--signal);border-radius:10px;padding:12px 16px;font-size:21px;font-weight:700;margin:10px 0 14px;line-height:1.4}
+.concl small{display:block;font-size:14px;font-weight:400;color:var(--muted);margin-top:4px}
+.concl.good{border-left-color:#6ee08a}
+.gloss{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin-top:8px}.gloss b{color:var(--ink,#fff)}
+.wcards{display:grid;grid-template-columns:1fr 110px 1fr 110px 1fr;align-items:stretch}
+.wcard{background:#0b0f1d8c;border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:opacity .5s,transform .5s}
+.wcard.hid,.warrow.hid{opacity:0;transform:translateY(8px)}
+.wcard h3{margin:0 0 6px;font-size:17px}.wcard .big{font-size:30px;font-weight:800;font-family:var(--f-num,ui-monospace),monospace}
+.wcard.hl{border-color:#6ee08a}
+.wstack{display:flex;height:20px;border-radius:5px;overflow:hidden;margin:4px 0 10px;background:#0006}.wstack i{display:block;height:100%}
+.warrow{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;transition:opacity .5s}
+.warrow .pct{font-size:22px;font-weight:800;line-height:1.2}.warrow .lab{font-size:12px;color:var(--muted)}
+.wleg{display:flex;gap:14px;font-size:13px;color:var(--muted);margin-top:6px;align-items:center;flex-wrap:wrap}
+.wleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
+.shbar{display:flex;height:44px;border-radius:8px;overflow:hidden;margin:8px 0 4px}.shbar div{display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;white-space:nowrap;overflow:hidden}
+.lossrow td{background:#ff5a5a14}
+.allg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px}
+.repc{background:#0b0f1d8c;border:1px solid #6ee08a;border-radius:12px;padding:14px}
+.repc .sides{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0}
+.repc .side{text-align:center;min-width:0}.repc .up2{font-size:22px;font-weight:800;color:#6ee08a}
+.lrow{display:flex;align-items:center;gap:8px;margin:4px 0}.lrow .ln{width:150px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ltrack{position:relative;flex:1;height:14px;background:#0006;border-radius:4px;min-width:80px}.ltrack .lbar2{height:14px;border-radius:4px}.ltrack .lline{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff}
+.lrow .lg{width:56px;text-align:right}.lrow .lt{width:160px;font-size:13px}
+.strip .zone2{position:absolute;top:0;bottom:0;background:#6ee08a1f;border-left:2px dashed #6ee08a;border-right:2px dashed #6ee08a}
+.strip .zone2 span{position:absolute;top:4px;left:6px;color:#6ee08a;font-size:12px;white-space:nowrap}
+.worldpop{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:80;display:flex;align-items:center;gap:14px;background:linear-gradient(90deg,#1d4d2f,#173a2a);border:1px solid #6ee08a;border-radius:14px;padding:12px 20px;font-size:20px;font-weight:700;box-shadow:0 10px 40px #000a;max-width:calc(100vw - 32px);cursor:pointer;animation:wpin .5s ease}
+.worldpop.flat{background:linear-gradient(90deg,#2a2f4f,#1c2446);border-color:var(--line)}
+.worldpop small{display:block;font-size:14px;font-weight:400;opacity:.85}
+@keyframes wpin{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (max-width:900px){.wcards{grid-template-columns:1fr}.warrow{flex-direction:row;padding:6px}.allg{grid-template-columns:1fr}}
 .zbtn{display:flex;gap:10px}
 .zbtn button{width:46px;height:40px;font-size:22px;padding:0;line-height:1}
 .lockbar,.built-strip{grid-column:1/-1}
@@ -377,7 +427,7 @@ button.wk:hover svg{filter:drop-shadow(0 0 4px #fff)}
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='v1.8';
+const VERSION='v1.9.1', MADE='2026.11', UPDATED='2026.11.23';
 /* ===================== 게임 데이터 ===================== */
 const WORKERS = 12;
 const GOODS = ['E','F','crystal','pearl','chip','core'];
@@ -443,11 +493,12 @@ const EVENTS = {
   wall:{n:'🚧 무역 장벽',d:'두 행성 사이 거래 금지',
     story:'두 행성이 항로 분쟁을 벌이다 서로의 화물선 입항을 금지했다. 두 행성 사이의 교역이 끊겼다.'}
 };
+function josa(w,withF,noF){ const c=w.charCodeAt(w.length-1)-0xAC00; return w+((c>=0&&c<11172&&c%28)?withF:noF); }
 function wallPair(ev){ const p=(ev&&ev.pair)||'aqua-volcano'; return p.split('-'); }
 function wallHas(ev,type){ return !!(ev&&ev.wall)&&wallPair(ev).includes(type); }
 function wallNames(ev){ const [a,b]=wallPair(ev); return TYPES[a].n+' ↔ '+TYPES[b].n; }
 function evD(k,st){ return k==='wall'?wallNames(st.events)+' 거래 금지':EVENTS[k].d; }
-function evStory(k,st){ if(k!=='wall') return EVENTS[k].story; const [a,b]=wallPair(st.events); return TYPES[a].n+'와(과) '+TYPES[b].n+'가 항로 분쟁을 벌이다 서로의 화물선 입항을 금지했다. 두 행성 사이의 교역이 끊겼다.'; }
+function evStory(k,st){ if(k!=='wall') return EVENTS[k].story; const [a,b]=wallPair(st.events); return josa(TYPES[a].n,'과','와')+' '+josa(TYPES[b].n,'이','가')+' 항로 분쟁을 벌이다 서로의 화물선 입항을 금지했다. 두 행성 사이의 교역이 끊겼다.'; }
 // 교역이 가장 활발한 행성 쌍 (서로 다른 행성끼리, 되돌린 거래 제외)
 function tradePairs(st){
   const m={}; liveTrades(st).forEach(tr=>{ const a=teamById(st,tr.from), b=teamById(st,tr.to); if(!a||!b||a.type===b.type) return; const k=[a.type,b.type].sort().join('-'); m[k]=(m[k]||0)+1; });
@@ -462,9 +513,10 @@ function rates(S,team){
   if(S.events.tech && team.type==='frost') r.E *= 3;
   return r;
 }
-function production(S,team,wE){
-  const r = rates(S,team);
-  return {E:Math.floor(wE*r.E), F:Math.floor((WORKERS-wE)*r.F)};
+function wFof(team){ return team.workersF==null?WORKERS-team.workersE:team.workersF; }
+function production(S,team,wE,wF){
+  const r = rates(S,team); if(wF==null) wF=WORKERS-wE;
+  return {E:Math.floor(wE*r.E), F:Math.floor(wF*r.F)};
 }
 function life(inv){ return (inv.E||0)*(inv.F||0); }
 function scoreOf(inv,built){ return Math.round(life(inv)*(1+BUILD_BONUS*built)); }
@@ -536,7 +588,7 @@ function assignTeams(n){
     const k=counts[type];
     const pool=Object.keys(MISSIONS).filter(m=>MISSIONS[m].planet===type&&!MISSIONS[m].mega);
     const missions=[pool[(k-1)%pool.length], pool[k%pool.length]];
-    teams.push({id:i+1,type,name:TYPES[type].n+' '+k+'호 식민지',workersE:6,
+    teams.push({id:i+1,type,name:TYPES[type].n+' '+k+'호 식민지',workersE:0,workersF:0,
       inv:{E:0,F:0,crystal:0,pearl:0,chip:0,core:0},missions,built:[],hist:{}});
   }
   return teams;
@@ -561,10 +613,10 @@ function hostAction(a){
       S.teams.forEach(t=>{ t.ready=false; });
       let wE=0,wF=0;
       S.teams.forEach(t=>{
-        const p=production(S,t,t.workersE);
+        const p=production(S,t,t.workersE,wFof(t));
         t.inv.E=p.E; t.inv.F=p.F;
         if(!(S.events.chipcut&&t.type==='terra')) t.inv[TYPES[t.type].spec]+=SPEC_PER_ROUND;
-        t.prodNow={...p,wE:t.workersE};
+        t.prodNow={...p,wE:t.workersE,wF:wFof(t)};
         wE+=p.E; wF+=p.F;
       });
       S.world[S.round]={E:wE,F:wF};
@@ -577,7 +629,7 @@ function hostAction(a){
       S.offers.forEach(o=>{ if(o.status==='pending') o.status='expired'; });
       S.teams.forEach(t=>{
         const l=life(t.inv);
-        t.hist[S.round]={E:t.inv.E,F:t.inv.F,life:l,score:scoreOf(t.inv,bpow(t)),wE:t.prodNow?t.prodNow.wE:t.workersE,
+        t.hist[S.round]={E:t.inv.E,F:t.inv.F,life:l,score:scoreOf(t.inv,bpow(t)),wE:t.prodNow?t.prodNow.wE:t.workersE,wF:t.prodNow&&t.prodNow.wF!=null?t.prodNow.wF:wFof(t),
           pE:t.prodNow?t.prodNow.E:0,pF:t.prodNow?t.prodNow.F:0};
       });
       S.teams.forEach(t=>{ t.hist[S.round].crisis=Math.round(t.hist[S.round].score/baseFor(S,t)*100); });
@@ -630,7 +682,10 @@ function teamAction(teamId,a){
       if(S.phase!=='plan') return '지금은 일꾼 배치 시간이 아닙니다.';
       if(team.ready) return '배치 완료 상태입니다. 바꾸려면 먼저 \'다시 배치하기\'를 누르세요.';
       if(R.lock) return '🔧 설비 전환 공사 중이라 이번 라운드는 일꾼 배치를 바꿀 수 없습니다.';
-      team.workersE=Math.min(WORKERS,Math.max(0,Math.floor(a.v)||0));
+      const e=Math.min(WORKERS,Math.max(0,Math.floor(a.v)||0));
+      const f=a.f==null?WORKERS-e:Math.min(WORKERS-e,Math.max(0,Math.floor(a.f)||0));
+      team.workersE=e; team.workersF=f;
+      if(e+f===WORKERS){ const key=S.round===4?'b':'n'; if(!team.tried||team.tried.k!==key) team.tried={k:key,v:{}}; const p=production(S,team,e,f); team.tried.v[e]=p.E*p.F; }
       return null;
     }
     case 'propose':{
@@ -841,7 +896,9 @@ function eventArt(k,st){
 function alarmCine(k,st){
   const E=EVENTS[k];
   const EVIMG={meteor:'event_meteor',tech:'event_tech',wall:'event_blockade',eruption:'event_eruption'};
-  showCine(`${CINE[EVIMG[k]]?'':eventArt(k,st)}<div class="ci-round">⚠ 긴급 상황 발생</div><h2>${E.n}</h2><p>${evStory(k,st)}</p><div class="ci-rule">${evD(k,st)}</div>`,'alarm',9000,CINE[EVIMG[k]]);
+  /* 무역 장벽 그림은 볼카노–아쿠아를 그린 것이라, 다른 두 행성이 막혔을 때는 실제 두 행성 그림으로 보여 준다 */
+  let img=CINE[EVIMG[k]]; if(k==='wall'&&wallPair(st&&st.events).slice().sort().join('-')!=='aqua-volcano') img=null;
+  showCine(`${img?'':eventArt(k,st)}<div class="ci-round">⚠ 긴급 상황 발생</div><h2>${E.n}</h2><p>${evStory(k,st)}</p><div class="ci-rule">${evD(k,st)}</div>`,'alarm',9000,img);
 }
 
 /* ===================== 공용 도구 ===================== */
@@ -878,7 +935,7 @@ function portArt(st,team,n){
 }
 function townHTML(st,team,root){
   const t=team.type, A=BUILD_ART[t], R=ROUNDS[st.round]||{};
-  const wE=curWorkers(root,team), p=st.phase==='plan'?production(st,team,wE):(team.prodNow||production(st,team,wE));
+  const W=curWorkers(root,team), p=st.phase==='plan'?production(st,team,W.e,W.f):(team.prodNow||production(st,team,W.e,W.f));
   const incoming=st.offers.filter(o=>o.to===team.id&&o.status==='pending').length;
   const storm=!R.trade, wall=wallHas(st.events,t), post=POST.includes(st.phase);
   const chipcut=st.round===4&&st.events.chipcut&&t==='terra';
@@ -922,9 +979,9 @@ function townHTML(st,team,root){
   </div>`;
 }
 function zoomHTML(st,team,root,k){
-  const t=team.type, A=BUILD_ART[t], r=rates(st,team), wE=curWorkers(root,team), p=st.phase==='plan'?production(st,team,wE):(team.prodNow||production(st,team,wE));
+  const t=team.type, A=BUILD_ART[t], r=rates(st,team), W=curWorkers(root,team), p=st.phase==='plan'?production(st,team,W.e,W.f):(team.prodNow||production(st,team,W.e,W.f));
   const big=src=>`<img class="zimg" src="${src}" alt="">`, go=(sec,lab)=>`<button data-act="goto" data-k="${sec}">${lab}</button>`;
-  if(k==='power'||k==='farm'){ const z=k==='power'?'E':'F', n=z==='E'?wE:WORKERS-wE;
+  if(k==='power'||k==='farm'){ const z=k==='power'?'E':'F', n=z==='E'?W.e:W.f;
     return `${big(IMG[t+(z==='E'?'_power':'_farm')])}<h2>${ic(z)} ${z==='E'?A.pn:A.fn}</h2><p style="text-align:center;margin:0">${TRAITS[t][z]}</p>${perWorker(z,r[z])}
       <p class="small" style="text-align:center;margin:0">일꾼 <b class="num">${n}</b>명 × 1명당 <b class="num">${+r[z].toFixed(1)}</b> = ${G[z].n} <b class="num">${p[z]}</b></p><div class="row" style="justify-content:center">${go('plan','⚙️ 일꾼 배치로 이동')}</div>`; }
   if(k==='home') return `${big(IMG['home_'+t])}<h2>🏠 거주 구역</h2><p style="text-align:center;margin:0">개척민 <b class="num">${WORKERS}</b>명이 살고 있어요. 개척민 수는 라운드가 바뀌어도 같아서 거주 구역은 늘어나지 않아요. 대신 빈 땅에 미션 건물이 들어서며 마을이 발전해요.</p>`;
@@ -992,7 +1049,8 @@ function applyPtab(root){
 }
 function colonySkeleton(team){
   const A=BUILD_ART[team.type];
-  return `<div class="row"><h3 class="grow">🏗️ ${TYPES[team.type].n} 개척지</h3><span class="muted small">개척민 ${WORKERS}명 · 일꾼을 누르면 다른 건물로 이동</span></div>
+  return `<div class="row"><h3 class="grow">🏗️ ${TYPES[team.type].n} 개척지 · 일꾼 배치</h3><span class="muted small">+ 로 일을 맡기고 − 로 쉬게 해요 · 일꾼을 누르면 다른 건물로 이동</span></div>
+  <div class="idlebar" data-idle></div>
   <div class="colony c-${team.type}" style="margin-top:10px">
     <div class="lockbar" hidden></div>
     ${['E','F'].map(z=>`<div class="zone" data-zone="${z}">
@@ -1001,34 +1059,36 @@ function colonySkeleton(team){
       <div class="ztrait">${TRAITS[team.type][z]}</div>
       <div data-zi="${z}"></div>
       <div class="workers" data-wk="${z}"></div>
-      <div class="zprod"><span class="num" data-zp="${z}">0</span> <span class="small muted">${G[z].n}</span></div>
-      <div class="small muted" data-zr="${z}"></div>
+      <div class="zprod">${ic(z)} <span class="num" data-zp="${z}">0</span></div>
+      <div class="zrate" data-zr="${z}"></div>
       <div class="zbtn"><button data-act="wadd" data-z="${z}" data-d="-1" aria-label="${z==='E'?A.pn:A.fn} 일꾼 한 명 빼기">−</button><button data-act="wadd" data-z="${z}" data-d="1" aria-label="${z==='E'?A.pn:A.fn} 일꾼 한 명 더하기">+</button></div>
     </div>`).join('')}
     <div class="built-strip" data-built hidden></div>
   </div>
+  <div class="lifeq" data-lifeq></div>
+  <div class="lchart" data-lchart></div>
   <div class="small" data-psum style="margin-top:8px"></div>
   <div data-ready></div>`;
 }
-function curWorkers(root,team){ return (root._wPend&&Date.now()<root._wPend.until)?root._wPend.v:team.workersE; }
+function curWorkers(root,team){ const p=root._wPend; return (p&&Date.now()<p.until)?{e:p.e,f:p.f}:{e:team.workersE,f:wFof(team)}; }
 function updateColony(root,st,team){
   const R=ROUNDS[st.round]||{};
   const canEdit=st.phase==='plan'&&!R.lock&&!team.ready;
-  const wE=curWorkers(root,team), r=rates(st,team), p=production(st,team,wE);
+  const W=curWorkers(root,team), wE=W.e, wF=W.f, idle=Math.max(0,WORKERS-wE-wF), r=rates(st,team), p=production(st,team,wE,wF);
   const rb=root.querySelector('[data-ready]');
-  if(rb){ const rsig=[st.phase,!!team.ready,!!R.lock].join('|'); if(rb.dataset.sig!==rsig){ rb.dataset.sig=rsig;
+  if(rb){ const rsig=[st.phase,!!team.ready,!!R.lock,idle>0].join('|'); if(rb.dataset.sig!==rsig){ rb.dataset.sig=rsig;
     rb.innerHTML=st.phase!=='plan'?'':team.ready?`<div class="rdybar done"><b class="up">✅ ${R.lock?'확인 완료!':'배치 완료!'}</b><span class="small">선생님이 생산을 확정할 때까지 기다려요.</span><button data-act="ready" data-v="0">↩ 다시 배치하기</button></div>`
-      :`<div class="rdybar"><span class="small">${R.lock?'이번 라운드는 배치가 고정이에요. 확인했으면 눌러 주세요.':'일꾼 배치를 마쳤으면 눌러 주세요. 선생님 화면에 표시돼요.'}</span><button class="primary" data-act="ready" data-v="1">✅ ${R.lock?'확인 완료':'배치 완료'}</button></div>`; } }
+      :`<div class="rdybar"><span class="small">${R.lock?'이번 라운드는 배치가 고정이에요. 확인했으면 눌러 주세요.':idle>0?'<b class="down">⚠ 아직 쉬는 개척민이 있어요.</b> 그래도 마쳤으면 눌러 주세요.':'일꾼 배치를 마쳤으면 눌러 주세요. 선생님 화면에 표시돼요.'}</span><button class="primary" data-act="ready" data-v="1">✅ ${R.lock?'확인 완료':'배치 완료'}</button></div>`; } }
   ['E','F'].forEach(z=>{
-    const n=z==='E'?wE:WORKERS-wE, box=root.querySelector(`[data-wk="${z}"]`), sig=n+'|'+canEdit;
+    const n=z==='E'?wE:wF, other=z==='E'?wF:wE, box=root.querySelector(`[data-wk="${z}"]`), sig=n+'|'+canEdit;
     if(box.dataset.sig!==sig){
       box.dataset.sig=sig;
       box.innerHTML=n?Array.from({length:n},()=>canEdit?`<button class="wk busy" data-act="wmove" data-z="${z}" title="${z==='E'?'농장으로 보내기':'발전소로 보내기'}" aria-label="${z==='E'?'일꾼을 농장으로 보내기':'일꾼을 발전소로 보내기'}">${workerSVG(z)}</button>`:`<span class="wk busy">${workerSVG(z)}</span>`).join(''):'<span class="small muted">비어 있음</span>';
     }
     root.querySelector(`[data-zp="${z}"]`).textContent=p[z];
-    root.querySelector(`[data-zr="${z}"]`).textContent=`일꾼 ${n}명 × 1명당 ${+r[z].toFixed(1)}`;
+    root.querySelector(`[data-zr="${z}"]`).innerHTML=`👷 <b class="num">${n}</b>명 × 1명당 <b class="num">${+r[z].toFixed(1)}</b>`;
     const zi=root.querySelector(`[data-zi="${z}"]`), zsig=String(r[z]); if(zi&&zi.dataset.sig!==zsig){ zi.dataset.sig=zsig; zi.innerHTML=perWorker(z,r[z]); }
-    root.querySelectorAll(`[data-act="wadd"][data-z="${z}"]`).forEach(b=>{ const nv=n+Number(b.dataset.d); b.disabled=!canEdit||nv<0||nv>WORKERS; });
+    root.querySelectorAll(`[data-act="wadd"][data-z="${z}"]`).forEach(b=>{ const d=Number(b.dataset.d); b.disabled=!canEdit||(d<0?n<=0:(idle<=0&&other<=0)); });
   });
   const lb=root.querySelector('.lockbar');
   let lock='';
@@ -1038,8 +1098,36 @@ function updateColony(root,st,team){
   const bs=root.querySelector('[data-built]'), bsig=team.built.join(',');
   if(bs.dataset.sig!==bsig){ bs.dataset.sig=bsig; bs.hidden=true; bs.innerHTML=team.built.map(m=>`<span class="bs">${missionArt(m)}${MISSIONS[m].n}</span>`).join(''); }
   const ps=root.querySelector('[data-psum]');
-  if(st.phase==='plan') ps.innerHTML=`예상 생산 ${ic('E')}<b class="num">${p.E}</b> ${ic('F')}<b class="num">${p.F}</b> → 생활지수 <b class="num">${p.E*p.F}</b> <span class="muted">(생산 확정 때 창고에 들어옵니다)</span>`;
+  if(st.phase==='plan') ps.innerHTML=`<span class="muted">계산판의 생산량은 선생님이 생산을 확정할 때 창고에 들어옵니다.</span>`;
   else ps.innerHTML=team.prodNow?`<span class="muted">이번 라운드 생산: ${ic('E')}${team.prodNow.E} ${ic('F')}${team.prodNow.F}</span>`:'';
+  // 쉬는 개척민
+  const ib=root.querySelector('[data-idle]'), isig=[idle,st.phase,canEdit].join('|');
+  if(ib&&ib.dataset.sig!==isig){ ib.dataset.sig=isig;
+    ib.hidden=st.phase!=='plan'&&idle===0;
+    ib.innerHTML=`<span class="idlelab">🏠 쉬는 개척민 <b class="num">${idle}</b>명</span><span class="idlewk">${Array.from({length:idle},()=>`<span class="wk idle">${workerSVG('E')}</span>`).join('')}</span>
+      <span class="small ${idle?'':'up'}">${idle===WORKERS&&canEdit?'👇 발전소와 농장의 <b>+</b> 버튼으로 일을 맡기세요':idle?'쉬는 개척민은 아무것도 만들지 않아요':'✓ 12명 모두 일하고 있어요'}</span>`; }
+  // 생활지수 계산판
+  const lq=root.querySelector('[data-lifeq]'), show=team.prodNow&&st.phase!=='plan'?team.prodNow:p, lv=show.E*show.F, lqsig=[show.E,show.F,st.phase].join('|');
+  if(lq&&lq.dataset.sig!==lqsig){ lq.dataset.sig=lqsig;
+    lq.innerHTML=`<div class="t"><small>${ic('E')} 에너지</small><span class="n e">${show.E}</span></div><span class="op">×</span><div class="t"><small>${ic('F')} 식량</small><span class="n f">${show.F}</span></div><span class="op">=</span><div class="t"><small>생활지수</small><span class="n l">${lv}</span></div>`; }
+  // 해 본 배치 그래프
+  const lc=root.querySelector('[data-lchart]');
+  if(lc){ const key=st.round===4?'b':'n', tv=(team.tried&&team.tried.k===key)?team.tried.v:{}, vals=Object.keys(tv).map(Number);
+    const full=idle===0, best=vals.length?vals.reduce((a,b)=>tv[b]>tv[a]?b:a):null;
+    const csig=JSON.stringify([tv,wE,full,st.phase,st.round,canEdit,!!R.lock]);
+    if(lc.dataset.sig!==csig){ lc.dataset.sig=csig;
+      lc.hidden=st.phase!=='plan';
+      let mx=1; for(let w=0;w<=WORKERS;w++){ const q=production(st,team,w,WORKERS-w); mx=Math.max(mx,q.E*q.F); }
+      const bars=Array.from({length:WORKERS+1},(_,w)=>{ const v=tv[w]; const cls=['lb',v==null?'none':'',full&&w===wE?'cur':'',v!=null&&w===best?'best':''].join(' ');
+        return `<button class="${cls}" ${v!=null&&canEdit?`data-act="wset" data-w="${w}"`:'tabindex="-1"'} aria-label="발전소 ${w}명 ${v==null?'아직 안 해 봄':'생활지수 '+v}"><span class="lbv">${v==null?'?':(w===best?'⭐':'')+v}</span><span class="lbb" style="height:${v==null?0:Math.max(2,Math.round(v/mx*100))}%"></span></button>`; }).join('');
+      let hint='';
+      if(!full) hint=`🏠 쉬는 개척민이 있으면 막대가 기록되지 않아요. <b>12명 모두</b>에게 일을 맡겨 보세요.`;
+      else if(best!=null&&tv[wE]===tv[best]) hint=vals.length<3?`좋아요! 다른 배치도 해 보면서 생활지수를 비교해 보세요.`:`⭐ 지금까지 해 본 배치 중 생활지수가 가장 높아요!`;
+      else if(best!=null) hint=`지금까지 최고는 발전소 <b class="num">${best}</b>명일 때 <b class="num">${tv[best]}</b>이에요.${canEdit?' 막대를 누르면 그 배치로 바뀌어요.':''}`;
+      const cap=st.round>=3?`<div class="lcap">💡 거래 없이 혼자 쓸 때의 생활지수예요. 잘하는 것에 몰아서 만들고 거래하면 이 막대보다 더 높이 갈 수 있어요.${st.round===4?' (사건 때문에 생산력이 바뀌어 새로 기록해요)':''}</div>`:'';
+      lc.innerHTML=`<div class="lch"><b>📊 해 본 배치의 생활지수</b> <span class="small muted">12명 모두 일할 때만 기록 · 가로 = 발전소 일꾼 수 (나머지는 농장)</span></div>
+        <div class="lbars">${bars}</div><div class="lxl">${Array.from({length:WORKERS+1},(_,w)=>`<span>${w}</span>`).join('')}</div>
+        <div class="lhint">${hint}</div>${cap}`; } }
 }
 function studentView(root,st,teamId,send){
   const team=teamById(st,teamId);
@@ -1109,7 +1197,7 @@ function studentView(root,st,teamId,send){
   sec('plan').hidden=post;
   if(post&&root._portOpen) setPort(root,false);
   const tw=root.querySelector('[data-town]'), inc=st.offers.filter(o=>o.to===team.id&&o.status==='pending').length;
-  const tsig=JSON.stringify([st.round,st.phase,team.built,curWorkers(root,team),inc,st.events,team.prodNow&&team.prodNow.E,team.inv]);
+  const tsig=JSON.stringify([st.round,st.phase,team.built,JSON.stringify(curWorkers(root,team)),inc,st.events,team.prodNow&&team.prodNow.E,team.inv]);
   if(tw.dataset.sig!==tsig){ tw.dataset.sig=tsig; tw.innerHTML=townHTML(st,team,root); }
   root.querySelector('[data-pcount]').textContent=post?'':inc?'· 받은 제안 '+inc:'';
   root.querySelector('[data-act="port"]').hidden=post;
@@ -1177,8 +1265,8 @@ function recordHTML(st,team){
   const tl=teamTrades(st,team), best=bestTrade(st,team);
   return `<div class="row" style="margin-top:10px"><label for="r-names" class="small">👥 팀원</label><input id="r-names" maxlength="60" style="flex:1 1 160px" value="${esc(team.members||'')}" placeholder="이름을 쉼표로 구분 (예: 김민준, 이서준)"><button data-act="names">저장</button></div>
     <div class="small" style="margin:10px 0">개척민 1명이 만드는 양: ${ic('E')} 에너지 <b class="num">${+r.E.toFixed(1)}</b>개 또는 ${ic('F')} 식량 <b class="num">${+r.F.toFixed(1)}</b>개</div>
-    ${rounds.length?`<div class="scroll"><table><tr><th>라운드</th><th>발전소 일꾼</th><th>생산 ${ic('E')}</th><th>생산 ${ic('F')}</th><th>거래 후 ${ic('E')}</th><th>거래 후 ${ic('F')}</th><th>건물</th><th>점수</th><th>성장률</th></tr>
-    ${rounds.map(x=>{const h=team.hist[x];return `<tr><td>${x===4?'⚡ 보너스':x}</td><td class="num">${h.wE}명</td><td class="num">${h.pE}</td><td class="num">${h.pF}</td><td class="num">${h.E}</td><td class="num">${h.F}</td><td class="num">${builtBy(st,team,x)}</td><td class="num">${h.score}</td><td class="num">${roundGrowth(team,x)}%${x===4?' <span class="small muted">위기 대응</span>':''}</td></tr>`;}).join('')}</table></div>`:'<p class="small muted">라운드가 끝나면 여기에 기록이 자동으로 쌓입니다.</p>'}
+    ${rounds.length?`<div class="scroll"><table><tr><th>라운드</th><th>일꾼 배치</th><th>생산 ${ic('E')}</th><th>생산 ${ic('F')}</th><th>거래 후 ${ic('E')}</th><th>거래 후 ${ic('F')}</th><th>건물</th><th>점수</th><th>성장률</th></tr>
+    ${rounds.map(x=>{const h=team.hist[x];return `<tr><td>${x===4?'⚡ 보너스':x}</td><td class="num">${ic('E')}${h.wE} ${ic('F')}${h.wF!=null?h.wF:WORKERS-h.wE}</td><td class="num">${h.pE}</td><td class="num">${h.pF}</td><td class="num">${h.E}</td><td class="num">${h.F}</td><td class="num">${builtBy(st,team,x)}</td><td class="num">${h.score}</td><td class="num">${roundGrowth(team,x)}%${x===4?' <span class="small muted">위기 대응</span>':''}</td></tr>`;}).join('')}</table></div>`:'<p class="small muted">라운드가 끝나면 여기에 기록이 자동으로 쌓입니다.</p>'}
     <h3 style="margin-top:14px">🏅 가장 좋았던 거래</h3>
     ${best?`<div class="small" style="margin-top:6px">${best.round===4?'보너스':best.round+'라운드'} · ${tname(st,best.other)}와 거래 · 우리가 준 것 <b>${fmt(best.gave)}</b> · 받은 것 <b>${fmt(best.got)}</b> · 점수 <b class="num ${best.d>=0?'up':'down'}">${best.d>=0?'▲':'▼'}${Math.abs(best.d)}</b></div>`:'<div class="small muted" style="margin-top:6px">아직 체결한 거래가 없습니다.</div>'}
     ${tl.length?`<div class="label" style="margin-top:12px">우리 거래 ${tl.length}건</div><div class="small feed" style="margin-top:4px;max-height:180px">${tl.map(x=>`<div>${x.round===4?'보너스':x.round+'R'} · ${tname(st,x.other)} · 줌 ${fmt(x.gave)} / 받음 ${fmt(x.got)}${typeof x.d==='number'?` · <span class="num ${x.d>=0?'up':'down'}">${x.d>=0?'▲':'▼'}${Math.abs(x.d)}</span>`:''}</div>`).join('')}</div>`:''}`;
@@ -1219,12 +1307,21 @@ function onStuClick(e,root){
   if(act==='wadd'||act==='wmove'){
     const st=root._st, team=teamById(st,root._team), R=ROUNDS[st.round]||{};
     if(st.phase!=='plan'||R.lock){ toast(R.lock&&st.phase==='plan'?'🔧 설비 전환 공사 중이라 일꾼 배치를 바꿀 수 없습니다.':'지금은 일꾼 배치 시간이 아닙니다.','bad'); return; }
-    const cur=curWorkers(root,team);
-    const d=act==='wadd'?(b.dataset.z==='E'?1:-1)*Number(b.dataset.d):(b.dataset.z==='E'?-1:1);
-    const v=Math.max(0,Math.min(WORKERS,cur+d)); if(v===cur) return;
-    root._wPend={v,until:Date.now()+2500};
+    if(team.ready){ toast('배치 완료 상태예요. 바꾸려면 먼저 \'다시 배치하기\'를 누르세요.','bad'); return; }
+    const W=curWorkers(root,team), z=b.dataset.z==='E'?'e':'f', o=z==='e'?'f':'e', idle=WORKERS-W.e-W.f, n={...W};
+    if(act==='wmove'){ if(n[z]<=0) return; n[z]--; n[o]++; }
+    else if(Number(b.dataset.d)>0){ if(idle>0) n[z]++; else if(n[o]>0){ n[z]++; n[o]--; } else return; }
+    else { if(n[z]<=0) return; n[z]--; }
+    root._wPend={e:n.e,f:n.f,until:Date.now()+2500};
     updateColony(root,st,team);
-    clearTimeout(wTimer); wTimer=setTimeout(()=>root._send({t:'workers',v}),180);
+    clearTimeout(wTimer); wTimer=setTimeout(()=>root._send({t:'workers',v:n.e,f:n.f}),90);
+    return;
+  }
+  if(act==='wset'){
+    const st=root._st, team=teamById(st,root._team), R=ROUNDS[st.round]||{};
+    if(st.phase!=='plan'||R.lock||team.ready) return;
+    const e=Number(b.dataset.w); root._wPend={e,f:WORKERS-e,until:Date.now()+2500}; updateColony(root,st,team);
+    clearTimeout(wTimer); wTimer=setTimeout(()=>root._send({t:'workers',v:e,f:WORKERS-e}),120);
     return;
   }
   if(act==='fx'){ toggleFx(); return; }
@@ -1673,7 +1770,7 @@ function wallPicker(st){
   return `<span class="wallpick"><label for="h-wall" class="small">🧱 장벽 대상</label><select id="h-wall" ${dis}>${pairs.map(k=>`<option value="${k}" ${k===cur?'selected':''}>${nm(k)}${tp.find(x=>x[0]===k)?' · '+tp.find(x=>x[0]===k)[1]+'회':''}</option>`).join('')}</select>
     <span class="small muted">📊 교역 활발: ${tp.length?tp.slice(0,3).map((x,i)=>`${i?'':'<b style="color:var(--signal)">'}${nm(x[0])} ${x[1]}회${i?'':'</b>'}`).join(' · '):'아직 없음'}</span></span>`;
 }
-document.addEventListener('change',e=>{ if(e.target&&e.target.id==='h-wall'&&typeof S!=='undefined'&&S){ hostAction({t:'wallpair',k:e.target.value}); commit(); } });
+document.addEventListener('change',e=>{ if(e.target&&e.target.id==='h-wall'&&typeof S!=='undefined'&&S){ const before=S.events.pair; hostAction({t:'wallpair',k:e.target.value}); commit(); if(S.events.wall&&S.events.pair!==before){ alarmCine('wall',S); sfx('alarm'); } } });
 function stepLabel(st){ const ph={plan:'작업 배치',trade:'교역 시간',result:'보급 정산',awards:'본선 시상식',bawards:'위기 대응 시상',analysis:'분석'}[st.phase]||st.phase; return (st.round===4?'보너스 라운드':st.round+'라운드')+' '+ph; }
 function ro(w){ const c=w.charCodeAt(w.length-1)-0xAC00; if(c<0||c>11171) return w+'로'; const j=c%28; return w+(j===0||j===8?'로':'으로'); }
 function stepLoss(snap){ const tr=liveTrades(S).length-liveTrades(snap).length, bl=(S.buildLog||[]).length-(snap.buildLog||[]).length; const a=[]; if(tr>0) a.push('거래 '+tr+'건'); if(bl>0) a.push('건설 '+bl+'건'); return a.join(', '); }
@@ -1694,6 +1791,7 @@ function onBoardClick(e){
   const b=e.target.closest('[data-h]'); if(!b||!app.contains(b)) return;
   const h=b.dataset.h;
   if(h==='resume'){ resumeAsk=false; boardView(); return; }
+  if(h==='worldplay'){ clearTimeout(WTIMER); WSTEP=1; boardView(); const step=()=>{ WSTEP++; if(WSTEP>3){ WSTEP=null; boardView(); return; } boardView(); WTIMER=setTimeout(step,1800); }; WTIMER=setTimeout(step,1800); return; }
   if(h==='copylink'){ const u=location.href.split('#')[0]+'#join'; const done=()=>toast('학생 참가 링크를 복사했습니다. 구글 클래스룸 등에 붙여 넣으세요.','ok');
     try{ navigator.clipboard.writeText(u).then(done,()=>{ prompt('이 링크를 복사하세요',u); }); }catch(err){ prompt('이 링크를 복사하세요',u); } return; }
   if(h==='fresh'){ resumeAsk=false; previewTeam=null; STEP_UNDO=[]; S=newState(S.code); commit(); return; }
@@ -1703,7 +1801,7 @@ function onBoardClick(e){
   if(h==='netr'){ clearTimeout(NET_PLAY); NETR=b.dataset.k; NET_ANIM=true; boardView(); return; }
   if(h==='netplay'){ clearTimeout(NET_PLAY); const seq=['1','2','3','4']; let i=0; const step=()=>{ NETR=seq[i]; NET_ANIM=true; boardView(); i++; if(i<seq.length) NET_PLAY=setTimeout(step,1800); }; step(); return; }
   if(h==='timer'){ const sel=document.getElementById('h-tm'); TIMER_MIN=Number(sel&&sel.value)||3; store('ksi-galaxy-timer',String(TIMER_MIN)); hostAction({t:'timer',m:TIMER_MIN}); commit(); tickTimers(); return; }
-  if(h==='wallset'){ hostAction({t:'wallpair',k:b.dataset.k}); commit(); return; }
+  if(h==='wallset'){ const before=S.events.pair; hostAction({t:'wallpair',k:b.dataset.k}); commit(); if(S.events.wall&&S.events.pair!==before){ alarmCine('wall',S); sfx('alarm'); } return; }
   if(h==='timerstop'){ hostAction({t:'timer',m:0}); commit(); return; }
   if(h==='undo'){
     const k=b.dataset.k;
@@ -1739,6 +1837,7 @@ function onBoardClick(e){
   if(S.round!==before.round&&S.phase==='plan'){ roundCine(S.round); sfx('round'); }
   if(h==='next'&&(S.phase==='awards'||S.phase==='bawards')){ sfx('round'); }
   if(h==='event'&&S.events[b.dataset.k]&&!before.events[b.dataset.k]){ alarmCine(b.dataset.k,S); sfx('alarm'); }
+  if(h==='confirm'&&S.round===3&&before.phase==='plan'&&S.phase==='trade') setTimeout(()=>worldPop(S),1200);
 }
 let previewTeam=null;
 function onBoardChange(e){
@@ -1749,69 +1848,168 @@ function localSend(teamId){
 }
 
 /* ===================== 분석 화면 ===================== */
+let WSTEP=null, WTIMER=null;
+function aPct(a,b){ return a?Math.round((b-a)/a*100):null; }
+function aSgn(n){ return n>0?'+'+n:n<0?'−'+Math.abs(n):'±0'; }
+function aJoin(arr){ return arr.length<=1?arr.join(''):arr.slice(0,-1).join(', ')+', '+arr[arr.length-1]; }
+function aRound(st){ return [3,2,1].find(r=>st.teams.some(t=>t.hist[r]))||null; }
+function aTypeProd(st,r){ const o={}; st.teams.forEach(t=>{ const h=t.hist[r]; const p=h?{E:h.pE||0,F:h.pF||0}:(r===st.round&&t.prodNow?t.prodNow:null); if(!p) return; o[t.type]=o[t.type]||{E:0,F:0}; o[t.type].E+=p.E; o[t.type].F+=p.F; }); return o; }
+function aGrow(t,r){ const h=t.hist[r]; return h?h.life/baseLine(t):null; }
+function aX(g){ return '×'+(g>=10?Math.round(g):Math.abs(g-1)<0.1?g.toFixed(2):g.toFixed(1)); }
+function aConcl(main,sub,cls){ return `<div class="concl ${cls||''}">${main}${sub?`<small>${sub}</small>`:''}</div>`; }
 function analysisView(){
   const st=S;
-  const tab=st.atab||'cap';
+  let tab=st.atab||'cap'; if(tab==='life') tab='world';
   const nSub=st.teams.filter(t=>t.submittedAt).length;
-  const tabs=[['cap','① 행성 능력 공개'],['life','② 라운드별 변화'],['terms','③ 교역 조건'],['spec','④ 특화 점검'],['net','⑤ 교역망'],['ans',`⑥ 생각 나누기 (${nSub}/${st.teams.length})`]];
-  let h=`<div class="panel row"><div class="tabs grow">${tabs.map(([k,n])=>`<button data-h="atab" data-k="${k}" class="${tab===k?'on':''}">${n}</button>`).join('')}</div>
-    <button data-h="awards">🏆 본선 시상식</button>${st.teams.some(t=>t.hist[4])?'<button data-h="bawards">🛡️ 위기 대응 시상</button>':''}<button data-h="export">📥 결과 내려받기</button><button data-h="back">전광판으로</button></div><div class="panel">`;
-  const types=[...new Set(st.teams.map(t=>t.type))];
+  const tabs=[['cap','① 행성 능력'],['world','② 세계 생산량'],['all','③ 모두에게 이득?'],['gain','④ 누가 더 가져갔나'],['terms','⑤ 교역 조건'],['spec','⑥ 특화 점검'],['net','⑦ 교역망'],['ans',`⑧ 생각 나누기 (${nSub}/${st.teams.length})`]];
+  let h=`<div class="panel"><div class="row"><div class="tabs grow">${tabs.map(([k,n])=>`<button data-h="atab" data-k="${k}" class="${tab===k?'on':''}">${n}</button>`).join('')}</div>
+    <button data-h="awards">🏆 본선 시상식</button>${st.teams.some(t=>t.hist[4])?'<button data-h="bawards">🛡️ 위기 대응 시상</button>':''}<button data-h="export">📥 결과 내려받기</button><button data-h="back">전광판으로</button></div>
+    <div class="gloss"><span>ⓘ <b>생활지수</b> = 에너지 × 식량</span><span><b>혼자 살 때 최고</b> = 거래 없이 낼 수 있는 최고 생활지수</span><span><b>성장률</b> = 지금 생활지수 ÷ 혼자 살 때 최고</span><span><b>기회비용</b> = 하나를 만들 때 포기한 다른 자원</span></div></div><div class="panel">`;
+  const types=[...new Set(st.teams.map(t=>t.type))].sort((a,b)=>Object.keys(TYPES).indexOf(a)-Object.keys(TYPES).indexOf(b));
+  const leg=`<div class="wleg">${types.map(k=>`<span><i style="background:var(--${k})"></i>${TYPES[k].n}</span>`).join('')}</div>`;
   if(tab==='cap'){
-    h+=`<h2>각 행성은 무엇을 잘했을까?</h2><p class="muted">개척민 1명이 하루에 만드는 양과, 하나를 만들 때 포기한 다른 자원(기회비용)입니다.</p>
+    const oc=k=>TYPES[k].rate.F/TYPES[k].rate.E;
+    const absE=types.reduce((a,b)=>TYPES[b].rate.E>TYPES[a].rate.E?b:a), absF=types.reduce((a,b)=>TYPES[b].rate.F>TYPES[a].rate.F?b:a);
+    const cE=types.reduce((a,b)=>oc(b)<oc(a)?b:a), cF=types.reduce((a,b)=>oc(b)>oc(a)?b:a);
+    const main=absE===absF&&types.length>1?`${josa(TYPES[absE].n,'은','는')} 둘 다 가장 많이 만들지만(절대우위), 가장 적게 포기하고 만드는 건 에너지는 ${TYPES[cE].n}, 식량은 ${TYPES[cF].n}입니다(비교우위).`:`에너지는 ${TYPES[cE].n}, 식량은 ${TYPES[cF].n}가 가장 적게 포기하고 만듭니다(비교우위).`;
+    h+=`<h2>각 행성은 무엇을 잘했을까?</h2>${aConcl(main,'많이 만드는 것(절대우위)과 적게 포기하는 것(비교우위)은 다릅니다. 무역은 비교우위를 따라 일어납니다.')}
       <div class="planet-row">${types.map(k=>`<div style="text-align:center">${planetSVG(k,72)}<div class="tag-${k}" style="font-family:var(--f-display)">${TYPES[k].n}</div></div>`).join('')}</div>
       <div class="scroll"><table>
       <tr><th>행성</th><th>${ic('E')}에너지 생산</th><th>${ic('F')}식량 생산</th><th>에너지 1개의 기회비용</th><th>식량 1개의 기회비용</th><th>비교우위</th></tr>
       ${types.map(k=>{const r=TYPES[k].rate;const oe=r.F/r.E, of=r.E/r.F;return `<tr><td class="tag-${k}">${pdot(k)} ${TYPES[k].n}</td><td class="num">${r.E}</td><td class="num">${r.F}</td><td class="num">식량 ${+oe.toFixed(2)}</td><td class="num">에너지 ${+of.toFixed(2)}</td><td>${caLabel(k,types)}</td></tr>`;}).join('')}
     </table></div>
-    <p class="small muted" style="margin-top:10px">테라는 두 자원 모두 가장 많이 만들지만(절대우위), 무엇을 포기하는지 따지면 다른 행성이 더 싸게 만드는 자원이 있습니다. 특산품 ${ic('crystal')}${ic('pearl')}${ic('core')}는 그 행성에만 있는 <b>천연자원</b>, ${ic('chip')}는 <b>기술</b>로 만든 상품입니다.</p>`;
+    <p class="small muted" style="margin-top:10px">생산량은 개척민 1명이 하루에 만드는 양입니다. 특산품 ${ic('crystal')}${ic('pearl')}${ic('core')}는 그 행성에만 있는 <b>천연자원</b>, ${ic('chip')}는 <b>기술</b>로 만든 상품입니다.</p>`;
   }
-  if(tab==='life'){
-    const rounds=[1,2,3,4].filter(r=>st.teams.some(t=>t.hist[r]));
-    const avg=(k,r)=>{const ts=st.teams.filter(t=>t.type===k&&t.hist[r]);return ts.length?Math.round(ts.reduce((s,t)=>s+t.hist[r].life,0)/ts.length):0;};
-    const max=Math.max(1,...types.flatMap(k=>rounds.map(r=>avg(k,r))));
-    h+=`<h2>무역 전과 후, 생활지수는 어떻게 변했나?</h2><p class="muted">행성 유형별 평균 생활지수(에너지 × 식량)입니다.</p>
-      ${rounds.length?`<div class="scroll"><table><tr><th>행성</th>${rounds.map(r=>`<th>${r}R ${ROUNDS[r].n}</th>`).join('')}</tr>
-      ${types.map(k=>`<tr><td class="tag-${k}">${pdot(k)} ${TYPES[k].n}</td>${rounds.map(r=>{const v=avg(k,r);return `<td><div class="num">${v}</div><div class="bar" style="width:${Math.round(v/max*120)}px;background:var(--${k})"></div></td>`;}).join('')}</tr>`).join('')}
-      <tr><td><b>세계 총생산</b></td>${rounds.map(r=>`<td class="num">${st.world[r]?ic('E')+st.world[r].E+' '+ic('F')+st.world[r].F:'-'}</td>`).join('')}</tr></table></div>`:'<p class="muted">결산된 라운드가 아직 없습니다.</p>'}
-      <p class="small muted" style="margin-top:10px">2라운드(교환만)와 3라운드(특화 후 교환)의 세계 총생산을 비교해 보세요. 물건을 바꾸기만 하면 총량은 그대로입니다.</p>`;
+  if(tab==='world'){
+    const rs=[1,2,3].filter(r=>st.world&&st.world[r]);
+    h+=`<h2>은하 전체 생산량은 얼마나 늘었나?</h2>`;
+    if(!rs.length) h+='<p class="muted">아직 생산한 라운드가 없습니다.</p>';
+    else{
+      const W=r=>st.world[r], mx={E:Math.max(1,...rs.map(r=>W(r).E)),F:Math.max(1,...rs.map(r=>W(r).F))};
+      if(W(3)){ const dE=aPct(W(1).E,W(3).E), dF=aPct(W(1).F,W(3).F), up=[], dn=[];
+        [['식량',dF],['에너지',dE]].sort((a,b)=>b[1]-a[1]).forEach(([n,d])=>{ if(d>0) up.push(`${josa(n,'이','가')} ${d}%`); else if(d<0) dn.push(`${josa(n,'은','는')} ${-d}% 줄었지만`); });
+        const main=up.length?`특화하자 은하 전체 ${dn.length?dn.join(' ')+' ':''}${aJoin(up)} 늘었습니다.`:`3라운드에도 은하 전체 생산량이 거의 늘지 않았습니다.`;
+        const same=W(2)&&W(2).E===W(1).E&&W(2).F===W(1).F;
+        h+=aConcl(main,(same?'교환만 한 2라운드에는 총량이 그대로였습니다. ':'')+(up.length?'일하는 개척민 수(행성마다 12명)는 똑같은데 생산이 늘었습니다.':'잘하는 것에 몰아서 만든 행성이 적었기 때문일까요?'),up.length?'good':'');
+      } else h+=aConcl('3라운드가 끝나면 특화 전후를 비교할 수 있습니다.','');
+      const tp={}; rs.forEach(r=>tp[r]=aTypeProd(st,r));
+      const stack=(r,z)=>{ const tot=W(r)[z]||0; return `<div class="wstack" style="width:${Math.max(4,Math.round(tot/mx[z]*100))}%">${types.map(k=>{ const v=(tp[r][k]||{})[z]||0; return v&&tot?`<i title="${TYPES[k].n} ${v}" style="width:${v/tot*100}%;background:var(--${k})"></i>`:''; }).join('')}</div>`; };
+      const sub={1:'혼자 생산',2:'생산 그대로, 거래만',3:'특화 후 거래'};
+      const card=(r,i)=>`<div class="wcard ${r===3&&W(3)&&(W(3).E+W(3).F>W(1).E+W(1).F)?'hl':''} ${WSTEP!=null&&i>=WSTEP?'hid':''}"><h3>${r}R ${ROUNDS[r].n} <span class="small muted">${sub[r]}</span></h3>
+        <div class="small muted">${ic('E')} 에너지</div><div class="big">${W(r).E}</div>${stack(r,'E')}
+        <div class="small muted">${ic('F')} 식량</div><div class="big">${W(r).F}</div>${stack(r,'F')}</div>`;
+      const arrow=(a,b,i)=>{ const dE=aPct(W(a).E,W(b).E), dF=aPct(W(a).F,W(b).F), flat=dE===0&&dF===0, pos=dE>0||dF>0;
+        return `<div class="warrow ${WSTEP!=null&&i>=WSTEP?'hid':''}"><div class="pct ${flat?'muted':pos?'up':'down'}">${flat?'±0%':`${ic('E')}${aSgn(dE)}%<br>${ic('F')}${aSgn(dF)}%`}</div><div class="lab">${flat?'바꾸기만 해서는<br>총량이 그대로':b===3&&pos?'잘하는 것에<br>몰아서 생산':''}</div><div style="font-size:26px">→</div></div>`; };
+      h+=`<div class="wcards" style="grid-template-columns:${rs.map((r,i)=>i?'110px 1fr':'1fr').join(' ')}">${rs.map((r,i)=>(i?arrow(rs[i-1],r,i):'')+card(r,i)).join('')}</div>
+        <div class="wleg">${types.map(k=>`<span><i style="background:var(--${k})"></i>${TYPES[k].n}</span>`).join('')}<span class="grow"></span>${rs.length>1?'<button class="primary" data-h="worldplay">▶ 라운드 순서대로 보기</button>':''}</div>
+        <p class="small muted" style="margin-top:8px">막대 색 = 그 자원을 어느 행성이 만들었는지. 1라운드와 3라운드 막대 색이 어떻게 달라졌는지 보세요.</p>`;
+    }
     if(st.teams.some(t=>t.hist[4])){ const ev=(st.eventsAt&&st.eventsAt[4])||{}, on=Object.keys(EVENTS).filter(k=>ev[k]);
       h+=`<div class="panel" style="margin-top:14px;border-color:var(--bad)"><h3>⚡ 보너스 라운드 돌아보기</h3>
         <p class="small muted">이번 보너스 라운드 사건: ${on.length?on.map(k=>EVENTS[k].n).join(', '):'없음'}</p>
         <ol style="margin:6px 0 0;padding-left:20px">
           ${ev.meteor?'<li>운석이 떨어졌을 때, 다른 행성과 활발히 무역하던 아쿠아 식민지와 그렇지 않은 식민지 중 누가 덜 다쳤나요? 무역은 위험을 나누는 수단이 될 수 있을까요?</li>':''}
           ${ev.eruption?'<li>화산 대분화로 볼카노의 에너지가 줄자, 볼카노에서 에너지를 사던 행성들은 어디서 에너지를 구했나요? 볼카노는 무엇을 만들어 팔았나요?</li>':''}
-          ${ev.wall?`<li>무역 장벽으로 손해를 본 것은 ${wallNames(ev).replace(' ↔ ','와(과) ')} 중 누구였나요? 한쪽만 손해를 봤나요, 양쪽 모두였나요? 장벽 밖의 행성은 어떤 영향을 받았나요?</li>`:''}
+          ${ev.wall?`<li>무역 장벽으로 손해를 본 것은 ${(([x,y])=>josa(TYPES[x].n,'과','와')+' '+TYPES[y].n)(wallPair(ev))} 중 누구였나요? 한쪽만 손해를 봤나요, 양쪽 모두였나요? 장벽 밖의 행성은 어떤 영향을 받았나요?</li>`:''}
           ${ev.chipcut?'<li>전자 제품 공급이 끊기자 전자 제품을 얻으려면 무엇을 더 내줘야 했나요? 귀해진 물건의 교환 조건은 어떻게 바뀌었나요?</li>':''}
           ${ev.tech?'<li>기술 혁신 뒤 프로스트 식민지는 무엇에 특화했나요? 비교우위는 영원히 고정된 것일까요?</li>':''}
           <li>사건이 불공평하다고 느꼈나요? 현실의 국가들도 이런 충격을 겪습니다. 미리 대비하려면 무엇이 필요할까요?</li>
         </ol></div>`; }
   }
+  if(tab==='all'){
+    const r=aRound(st);
+    h+=`<h2>교역은 모두에게 이득이었나?</h2>`;
+    if(!r) h+='<p class="muted">결산된 라운드가 아직 없습니다.</p>';
+    else{
+      const rows=st.teams.filter(t=>t.hist[r]).map(t=>({t,g:aGrow(t,r)})).sort((a,b)=>b.g-a.g);
+      const over=rows.filter(x=>x.g>1.0001), G={}; rows.forEach(x=>G[x.t.id]=x.g);
+      let rep=null; liveTrades(st).filter(tr=>tr.round===r).forEach(tr=>{ const ga=G[tr.from], gb=G[tr.to]; if(ga>1.0001&&gb>1.0001){ const m=Math.min(ga,gb); if(!rep||m>rep.m) rep={tr,m}; } });
+      const all=over.length===rows.length&&rows.length>0;
+      const main=all?'🤝 모든 식민지가 혼자서는 닿을 수 없는 생활 수준에 도달했습니다.':rep?'🤝 거래한 두 식민지가 <u>둘 다</u> 혼자서는 닿을 수 없는 생활 수준에 도달했습니다.':over.length?`🤝 ${rows.length}팀 중 ${over.length}팀이 혼자서는 닿을 수 없는 생활 수준에 도달했습니다.`:'아직 혼자 살 때 최고 선을 넘은 팀이 없습니다.';
+      const sub=over.length?`${rows.length}팀 중 ${over.length}팀이 '혼자 살 때 최고' 선을 넘었습니다. 한쪽이 얻으면 다른 쪽이 잃는 게임이 아니었습니다.`:'무엇을 바꾸면 이 선을 넘을 수 있을까요? 잘하는 것에 몰아서 만들고 거래해 보면 어떨까요?';
+      h+=aConcl(main,sub,over.length?'good':'');
+      const sc=Math.max(3,...rows.map(x=>x.g))*1.05;
+      const side=(id,gave)=>{ const t=teamById(st,id); return `<div class="side"><div style="margin:0 auto 4px;width:44px">${planetSVG(t.type,44)}</div><b class="tag-${t.type}">${esc(t.name)}</b><div class="small muted">${fmt(gave)} 줌</div><div class="up2">${t.hist[1]?t.hist[1].life:'-'} → ${t.hist[r].life} ↑</div><div class="small muted">혼자 최고 ${baseLine(t)}의 ${aX(G[id])}</div></div>`; };
+      const left=rep?`<div class="repc"><div class="small muted">대표 거래 · ${r}라운드 · 두 식민지 모두 가장 많이 성장한 거래</div>
+          <div class="sides">${side(rep.tr.from,rep.tr.give)}<div style="font-size:30px">⇄</div>${side(rep.tr.to,rep.tr.get)}</div>
+          <div style="text-align:center;font-size:17px;font-weight:700" class="up">거래한 두 식민지 모두 한계선을 넘었습니다 ✓✓</div></div>`
+        :`<div class="repc" style="border-color:var(--line)"><div class="muted">두 식민지가 모두 한계선을 넘은 거래가 아직 없습니다.</div></div>`;
+      h+=`<div class="allg">${left}<div><div class="small muted" style="margin-bottom:6px">팀별 ${r}라운드 생활지수 ÷ 혼자 살 때 최고 &nbsp;│ 흰 선 = 혼자서 갈 수 있는 한계선</div>
+        ${rows.map(({t,g})=>{ const ok=g>1.0001, eq=Math.abs(g-1)<0.0001, col=ok?'var(--good,#6ee08a)':eq?'var(--muted)':'var(--bad,#ff5a5a)';
+          return `<div class="lrow"><span class="ln tag-${t.type}">${pdot(t.type)} ${esc(t.name)}</span><div class="ltrack"><div class="lbar2" style="width:${Math.min(100,g/sc*100)}%;background:var(--${t.type})"></div><div class="lline" style="left:${100/sc}%"></div></div>
+          <span class="num lg" style="color:${col}">${aX(g)}</span><span class="lt" style="color:${col}">${ok?'✓ 혼자서는 못 갈 곳':eq?'= 혼자 살 때와 같음':'✗ 혼자 살 때보다 아래'}</span></div>`; }).join('')}</div></div>
+        ${over.length<rows.length?`<p class="small muted" style="margin-top:10px">한계선을 넘지 못한 팀(${rows.filter(x=>x.g<=1.0001).map(x=>esc(x.t.name)).join(', ')})은 "왜 우리는 이득을 못 봤을까?"를 생각해 보세요. 특화를 덜 했나? 교역 조건이 불리했나? → ⑤ 교역 조건, ⑥ 특화 점검</p>`:''}`;
+    }
+  }
+  if(tab==='gain'){
+    const r=aRound(st);
+    h+=`<h2>모두 이득을 봤다면, 늘어난 몫은 누가 더 가져갔나?</h2>`;
+    if(!r||r===1||!st.teams.some(t=>t.hist[1])) h+='<p class="muted">1라운드와 비교할 라운드가 아직 없습니다.</p>';
+    else{
+      const rows=st.teams.filter(t=>t.hist[1]&&t.hist[r]).map(t=>({t,a:t.hist[1].life,b:t.hist[r].life,d:t.hist[r].life-t.hist[1].life,g:aGrow(t,r)})).sort((x,y)=>y.d-x.d);
+      const pos=rows.reduce((s,x)=>s+Math.max(0,x.d),0), byT={}; rows.forEach(x=>{ if(x.d>0) byT[x.t.type]=(byT[x.t.type]||0)+x.d; });
+      const shares=types.filter(k=>byT[k]).map(k=>({k,p:Math.round(byT[k]/pos*100)})).sort((a,b)=>b.p-a.p);
+      const none=types.filter(k=>!byT[k]), lost=rows.filter(x=>x.d<0);
+      if(pos>0){
+        h+=aConcl(`새로 생긴 생활지수 ${pos} 중 ${aJoin(shares.map(x=>`${josa(TYPES[x.k].n,'이','가')} ${x.p}%`))}를 가져갔습니다.`,
+          [none.length?`${none.map(k=>TYPES[k].n).join('·')}는 새로 얻은 몫이 거의 없었습니다.`:'', lost.length?`${lost.map(x=>esc(x.t.name)).join(', ')}는 1라운드보다 생활지수가 줄었습니다.`:''].filter(Boolean).join(' '));
+        h+=`<div class="small muted">1라운드 → ${r}라운드에 새로 생긴 생활지수를 100%로 본 몫</div><div class="shbar">${shares.map(x=>`<div style="width:${x.p}%;background:var(--${x.k})">${x.p>=8?TYPES[x.k].n+' '+x.p+'%':''}</div>`).join('')}</div>${leg}`;
+      } else h+=aConcl('1라운드보다 생활지수가 늘어난 식민지가 없습니다.','특화와 교역이 충분히 일어나지 않았을 수 있습니다.');
+      const mxd=Math.max(1,...rows.map(x=>x.d));
+      h+=`<div class="scroll" style="margin-top:12px"><table><tr><th>팀</th><th>1R 생활지수</th><th>${r}R 생활지수</th><th>얼마나 늘었나</th><th>${r}R 성장률</th><th></th></tr>
+        ${rows.map(x=>`<tr class="${x.d<0?'lossrow':''}"><td class="tag-${x.t.type}">${pdot(x.t.type)} ${esc(x.t.name)}</td><td class="num">${x.a}</td><td class="num">${x.b}</td><td class="num ${x.d>0?'up':x.d<0?'down':''}">${aSgn(x.d)}</td><td class="num">${Math.round(x.g*100)}%</td>
+          <td>${x.d>0?`<div style="height:12px;border-radius:3px;width:${Math.round(x.d/mxd*220)}px;background:var(--${x.t.type})"></div>`:x.d<0?'<span class="small down">⚠ 1라운드보다 줄었어요 · 교역 조건을 확인해 보세요 → ⑤</span>':''}</td></tr>`).join('')}</table></div>
+        <p class="small muted" style="margin-top:8px">늘어난 양은 출발점에 따라 크게 달라 보입니다(테라는 ${autarkyMax('terra')}, 볼카노는 ${autarkyMax('volcano')}이 혼자 살 때 최고). 공평하게 비교하려면 '성장률'을 보세요.</p>`;
+    }
+  }
   if(tab==='terms'){
+    const oc=k=>TYPES[k].rate.F/TYPES[k].rate.E;
     const pts=liveTrades(st).map(tr=>{
-      const a=tr.give,b=tr.get;
-      const only=(o,k)=>GOODS.every(g=>g===k||!o[g]);
-      if(only(a,'E')&&only(b,'F')&&a.E&&b.F) return {r:b.F/a.E,tr};
-      if(only(a,'F')&&only(b,'E')&&a.F&&b.E) return {r:a.F/b.E,tr};
-      return null;}).filter(Boolean);
+      const a=tr.give,b=tr.get, only=(o,k)=>GOODS.every(g=>g===k||!o[g]);
+      let r=null, eg=null, fg=null;
+      if(only(a,'E')&&only(b,'F')&&a.E&&b.F){ r=b.F/a.E; eg=tr.from; fg=tr.to; }
+      else if(only(a,'F')&&only(b,'E')&&a.F&&b.E){ r=a.F/b.E; eg=tr.to; fg=tr.from; }
+      if(r==null) return null;
+      const te=teamById(st,eg), tf=teamById(st,fg); if(!te||!tf) return null;
+      const se=Math.log(r/oc(te.type)), sf=Math.log(oc(tf.type)/r);
+      return {r,both:se>=-1e-9&&sf>=-1e-9,win:se>=sf?te.type:tf.type,lab:`${te.name} ⚡→ ${tf.name} 🌱 · 에너지 1 = 식량 ${r.toFixed(2)}`};
+    }).filter(Boolean);
     const lo=Math.log(0.2),hi=Math.log(5),x=v=>Math.min(100,Math.max(0,(Math.log(v)-lo)/(hi-lo)*100));
-    h+=`<h2>에너지 1개는 식량 몇 개와 바뀌었나?</h2><p class="muted">에너지와 식량만 맞바꾼 거래를 교환 비율 위치에 찍었습니다. 세로선은 각 행성이 에너지 1개를 만들 때 포기하는 식량(기회비용)입니다.</p>
-      <div class="strip">${types.map(k=>{const r=TYPES[k].rate;const v=r.F/r.E;return `<div class="mk tag-${k}" style="left:${x(v)}%">${pdot(k)}${TYPES[k].n}<br>${+v.toFixed(2)}</div>`;}).join('')}
-      ${pts.map((p,i)=>`<div class="tr" title="에너지 1 = 식량 ${p.r.toFixed(2)}" style="left:${x(p.r)}%;bottom:${12+(i%6)*16}px"></div>`).join('')}</div>
-      <p>${pts.length?`에너지·식량 맞교환 <b class="num">${pts.length}</b>건. 비율 범위: 에너지 1 = 식량 <b class="num">${Math.min(...pts.map(p=>p.r)).toFixed(2)}</b> ~ <b class="num">${Math.max(...pts.map(p=>p.r)).toFixed(2)}</b>`:'에너지와 식량만 맞바꾼 거래가 아직 없습니다.'}</p>
-      <p class="small muted">질문: 볼카노와 아쿠아가 둘 다 이득을 본 거래는 어디에 몰려 있나요? 두 행성의 기회비용 사이를 벗어난 거래는 누가 손해를 봤을까요?</p>`;
+    const ocs=types.map(oc), zl=Math.min(...ocs), zh=Math.max(...ocs);
+    const nb=pts.filter(p=>p.both).length;
+    h+=`<h2>에너지 1개는 식량 몇 개와 바뀌었나?</h2>${pts.length?aConcl(`에너지·식량 맞교환 ${pts.length}건 중 ${nb}건이 두 식민지 모두에게 이득인 비율이었습니다.`,nb<pts.length?`나머지 ${pts.length-nb}건은 한쪽이 혼자 만드는 것보다 손해를 본 거래입니다. 어느 쪽이었을까요?`:'교환 비율이 두 식민지의 기회비용 사이에 있으면 양쪽 모두 이득입니다.',nb===pts.length?'good':''):aConcl('에너지와 식량만 맞바꾼 거래가 아직 없습니다.','')}
+      <p class="muted">세로선은 각 행성이 에너지 1개를 만들 때 포기하는 식량(기회비용)입니다. 초록 구간 안의 비율이면 거래한 두 행성이 모두 이득을 볼 수 있습니다. 점 색 = 그 거래에서 이득을 더 본 행성.</p>
+      <div class="strip">${types.length>1?`<div class="zone2" style="left:${x(zl)}%;width:${x(zh)-x(zl)}%"><span>둘 다 이득을 볼 수 있는 구간</span></div>`:''}${types.map(k=>{const v=oc(k);return `<div class="mk tag-${k}" style="left:${x(v)}%">${pdot(k)}${TYPES[k].n}<br>${+v.toFixed(2)}</div>`;}).join('')}
+      ${pts.map((p,i)=>`<div class="tr" title="${esc(p.lab)}${p.both?' · 둘 다 이득':' · 한쪽 손해'}" style="left:${x(p.r)}%;bottom:${12+(i%6)*16}px;background:var(--${p.win});${p.both?'':'border-color:#ff5a5a'}"></div>`).join('')}</div>
+      <p>${pts.length?`비율 범위: 에너지 1 = 식량 <b class="num">${Math.min(...pts.map(p=>p.r)).toFixed(2)}</b> ~ <b class="num">${Math.max(...pts.map(p=>p.r)).toFixed(2)}</b> · 빨간 테두리 점 = 한쪽이 손해 본 거래`:''}</p>
+      <p class="small muted">질문: 초록 구간을 벗어난 거래는 누가 손해를 봤을까요? 왜 그런 조건을 받아들였을까요?</p>`;
   }
   if(tab==='spec'){
     const r=st.teams.some(t=>t.hist[3])?3:st.teams.some(t=>t.hist[2])?2:1;
-    h+=`<h2>${r}라운드에 각 행성은 무엇에 집중했나?</h2><p class="muted">개척민 12명 중 발전소(에너지)에 배치한 비율입니다.</p>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">${st.teams.map(t=>{const hh=t.hist[r];const w=hh?hh.wE:t.workersE;return `<div class="row"><span class="tag-${t.type}" style="min-width:150px">${pdot(t.type)} ${t.name}</span>
+    const rows=st.teams.map(t=>{ const hh=t.hist[r]; const w=hh?hh.wE:t.workersE, f=hh?(hh.wF!=null?hh.wF:WORKERS-hh.wE):wFof(t); return {t,w,f,g:hh?aGrow(t,r):null,sp:Math.max(w,f)>=9}; });
+    const avg=a=>a.length?a.reduce((s,x)=>s+x.g,0)/a.length:null, A=avg(rows.filter(x=>x.sp&&x.g!=null)), B=avg(rows.filter(x=>!x.sp&&x.g!=null));
+    const main=A!=null&&B!=null?`한쪽에 9명 이상 몰아서 만든 팀은 평균 ${aX(A)}, 고르게 나눈 팀은 평균 ${aX(B)} 성장했습니다.`:A!=null?`모든 팀이 한쪽에 몰아서 만들었고, 평균 ${aX(A)} 성장했습니다.`:B!=null?`한쪽에 몰아서 만든 팀이 없었습니다. 평균 ${aX(B)} 성장했습니다.`:'';
+    h+=`<h2>${r}라운드에 각 행성은 무엇에 집중했나?</h2>${main?aConcl(main,'성장률(×) = 생활지수 ÷ 혼자 살 때 최고. 비교우위가 있는 쪽으로 몰아서 만든 팀이 더 크게 성장했나요?',A!=null&&B!=null&&A>B?'good':''):''}
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">${rows.map(({t,w,f,g})=>`<div class="row"><span class="tag-${t.type}" style="min-width:150px">${pdot(t.type)} ${esc(t.name)}</span>
         <div class="grow" style="background:var(--void);border-radius:4px;height:14px;position:relative;min-width:120px"><div class="bar" style="height:14px;width:${w/WORKERS*100}%;background:var(--${t.type})"></div></div>
-        <span class="num small" style="width:110px">${ic('E')}${w} : ${ic('F')}${WORKERS-w}</span><span class="small muted" style="width:120px">${caLabel(t.type,types)}</span></div>`;}).join('')}</div>
-      <p class="small muted" style="margin-top:10px">비교우위가 있는 자원 쪽으로 기운 행성일수록 성장률이 높았나요?</p>`;
+        <span class="num small" style="width:110px">${ic('E')}${w} : ${ic('F')}${f}</span><span class="small muted" style="width:120px">${caLabel(t.type,types)}</span><span class="num ${g==null?'':g>1.0001?'up':g<0.9999?'down':''}" style="width:60px;text-align:right;font-size:17px">${g==null?'-':aX(g)}</span></div>`).join('')}</div>
+      <p class="small muted" style="margin-top:10px">막대 = 발전소(에너지)에 배치한 비율.</p>`;
   }
-  if(tab==='net') h+=netView(st,types);
+  if(tab==='net'){
+    const pr={1:0,2:0,3:0,4:0}; liveTrades(st).forEach(tr=>pr[tr.round]=(pr[tr.round]||0)+1);
+    h+=aConcl(`교역 ${pr[1]}건(1R) → ${pr[2]}건(2R) → ${pr[3]}건(3R)`, pr[3]>pr[2]?'특화가 늘수록 서로 기대는 관계(상호 의존)가 촘촘해졌습니다.':'라운드마다 교역망이 어떻게 달라졌는지 보세요.');
+    h+=netView(st,types);
+  }
   if(tab==='ans') h+=ansBoard(st);
   return h+'</div>';
+}
+function worldPop(st){
+  if(!st.world||!st.world[1]||!st.world[3]) return;
+  const a=st.world[1], b=st.world[3], dE=aPct(a.E,b.E), dF=aPct(a.F,b.F), up=(b.E+b.F)>(a.E+a.F);
+  document.querySelectorAll('.worldpop').forEach(x=>x.remove());
+  const el=document.createElement('div'); el.className='worldpop'+(up?'':' flat');
+  el.innerHTML=`<span style="font-size:34px">${up?'📈':'📊'}</span><div>${up?'은하 전체 생산량이 늘었습니다!':'은하 전체 생산량'} &nbsp;${ic('E')} ${a.E} → ${b.E} (${aSgn(dE)}%) · ${ic('F')} ${a.F} → ${b.F} (${aSgn(dF)}%)<small>${up?'일하는 개척민 수는 1라운드와 똑같은데, 무엇이 달라졌을까요?':'1라운드와 거의 같아요. 잘하는 것에 몰아서 만들면 어떻게 될까요?'}</small></div>`;
+  el.onclick=()=>el.remove(); document.body.appendChild(el); setTimeout(()=>el.remove(),11000);
 }
 function ansBoard(st){
   const qs=qList(st); if(!qs.find(q=>q.k===ANSQ)) ANSQ='q1';
@@ -1830,11 +2028,11 @@ function exportRows(st){
   const rounds=[1,2,3,4].filter(r=>st.teams.some(t=>t.hist[r]));
   const lab=r=>r===4?'보너스':r+'R';
   const recH=['팀 번호','팀 이름','행성','팀원'];
-  rounds.forEach(r=>recH.push(lab(r)+' 발전소 일꾼',lab(r)+' 생산 에너지',lab(r)+' 생산 식량',lab(r)+' 거래 후 에너지',lab(r)+' 거래 후 식량',lab(r)+' 건물 수',lab(r)+' 점수',r===4?'보너스 위기 대응(%)':lab(r)+' 성장률(%)'));
+  rounds.forEach(r=>recH.push(lab(r)+' 발전소 일꾼',lab(r)+' 농장 일꾼',lab(r)+' 생산 에너지',lab(r)+' 생산 식량',lab(r)+' 거래 후 에너지',lab(r)+' 거래 후 식량',lab(r)+' 건물 수',lab(r)+' 점수',r===4?'보너스 위기 대응(%)':lab(r)+' 성장률(%)'));
   recH.push('본선 순위','교역 횟수','지은 건물');
   const records=[recH].concat(st.teams.map(t=>{
     const row=[t.id,t.name,TYPES[t.type].n,t.members||''];
-    rounds.forEach(r=>{ const h=t.hist[r]; row.push(...(h?[h.wE,h.pE,h.pF,h.E,h.F,builtBy(st,t,r),h.score,roundGrowth(t,r)]:['','','','','','','',''])); });
+    rounds.forEach(r=>{ const h=t.hist[r]; row.push(...(h?[h.wE,h.wF!=null?h.wF:WORKERS-h.wE,h.pE,h.pF,h.E,h.F,builtBy(st,t,r),h.score,roundGrowth(t,r)]:['','','','','','','','',''])); });
     row.push(t.hist[3]&&t.hist[3].rank?t.hist[3].rank:'',teamTrades(st,t).length,t.built.map(m=>MISSIONS[m]?MISSIONS[m].n:m).join(', '));
     return row;
   }));
@@ -2208,6 +2406,7 @@ function clientCine(prev,st){
     if(nw.length){ toast('📩 '+tname(st,nw[0].from).replace(/<[^>]+>/g,'').trim()+'에서 거래 제안이 왔어요! 🚀 우주항을 확인하세요.','ok'); setTimeout(()=>{ const pt=document.querySelector('#stu-root .gb.port'); if(pt){ pt.classList.remove('ping'); void pt.offsetWidth; pt.classList.add('ping'); } },50); } }
   if(prev&&prev.phase==='plan'&&st.phase==='trade'&&prev.round===st.round){ const me=teamById(st,cl.team), pm=teamById(prev,cl.team);
     if(me&&pm){ const k=TYPES[me.type].spec, n=(me.inv[k]||0)-(pm.inv[k]||0); if(n>0) setTimeout(()=>{ const rt=document.getElementById('stu-root'); townProduce(rt,me); specArrive(rt,k,n); },st.round===1?600:900); } }
+  if(prev&&prev.phase==='plan'&&st.phase==='trade'&&st.round===3&&prev.round===3) setTimeout(()=>worldPop(st),2200);
   if(POST.includes(st.phase)&&(!prev||!POST.includes(prev.phase))) setTimeout(()=>toast('✍️ 생각해 보기가 열렸습니다. 팀이 함께 답을 써서 제출하세요.','ok'),1200);
   if(prev&&prev.trades) st.trades.forEach((t,i)=>{ const p=prev.trades[i]; if(t.undone&&p&&!p.undone&&(t.from===cl.team||t.to===cl.team)) toast('↩ 선생님이 '+(t.from===cl.team?tname(st,t.to).replace(/<[^>]+>/g,'').trim():tname(st,t.from).replace(/<[^>]+>/g,'').trim())+'와의 거래를 되돌렸습니다.','bad'); });
   if(st.phase==='awards'){ if(!prev||prev.phase!=='awards') showCine(`<div class="ci-round">FINAL</div><h2>🏆 본선 시상식</h2><p>1~3라운드 기록으로 최종 순위가 확정되었습니다.</p>${awardsCards(st,false)}`,'',20000,CINE.cine_round3); return; }
@@ -2221,6 +2420,7 @@ function clientCine(prev,st){
   }
   if(!prev||prev.round!==st.round){ roundCine(st.round); return; }
   Object.keys(EVENTS).forEach(k=>{ if(st.events[k]&&!prev.events[k]) alarmCine(k,st); });
+  if(st.events.wall&&prev.events.wall&&st.events.pair!==prev.events.pair) alarmCine('wall',st);
 }
 function clientSend(a,ok){
   if(!cl.room||!cl.joined){ toast('통신이 끊겨 있습니다.','bad'); return; }
@@ -2246,7 +2446,7 @@ function landing(){
     <div class="sub" style="margin-top:10px">네 개의 행성, 하나의 은하 시장</div>
     <div class="choices"><button class="primary" id="go-join">🚀 학생으로 참가</button><button id="go-host">🛰️ 교사 전광판 열기</button></div>
     ${dbLineHTML()}
-    <div class="credit">제작: <img class="slogo" src="${IMG.logo}" alt="신성고 교표">신성고 사회과 교사 이석현 · ${VERSION}<br><span class="lic">교육용 무료 사용 · 출처 표시 · 상업적 이용 금지</span><br>이미지: Google Gemini로 생성</div></div></div>`;
+    <div class="credit">제작: <img class="slogo" src="${IMG.logo}" alt="신성고 교표">신성고 사회과 교사 이석현 · ${MADE} 제작<br>${VERSION} (${UPDATED} 업데이트)<br><span class="lic">교육용 무료 사용 · 출처 표시 · 상업적 이용 금지</span><br>이미지: Google Gemini로 생성</div></div></div>`;
   $('#go-join').onclick=()=>{ location.hash='join'; };
   $('#go-host').onclick=()=>{ const sv=dbSaved(); if(!DB_Q&&sv){ location.href=dbLink(sv,'host'); return; } location.hash='host'; };
   wireDb();
