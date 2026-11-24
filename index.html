@@ -297,6 +297,11 @@ body.lowfx .steam{opacity:.35}
 @keyframes pdin{from{transform:translateX(30px);opacity:0}}
 @media (max-width:640px){.port-drawer{top:auto;left:0;width:auto;max-height:88vh;border-left:0;border-top:2px solid var(--aqua);border-radius:18px 18px 0 0}}
 .port-drawer>.panel{background:transparent;border:0;padding:0;box-shadow:none}
+.pd-hero{position:relative;display:grid;place-items:center;min-height:200px;border-radius:14px;border:1px solid var(--line);background:radial-gradient(ellipse at 50% 85%,#ffffff1a,transparent 65%),linear-gradient(180deg,#0b0f1d,#1a2140);overflow:hidden;flex:none}
+.pd-hero img{width:100%;max-height:260px;object-fit:contain;filter:drop-shadow(0 10px 18px #000a)}
+.pd-hero .ph-tag{position:absolute;left:10px;bottom:10px;font-size:13px;padding:3px 10px;border-radius:999px;background:#0b0f1dcc;border:1px solid var(--line)}
+.pd-hero .ph-tag.storm{color:#c9b6ff;border-color:#8a6dff}.pd-hero .ph-tag.wall{color:#ff7a7a;border-color:#ff5a5a}.pd-hero .ph-tag.ok{color:#6ee08a;border-color:#2f7a4a}
+.pd-hero .ph-badge{position:absolute;right:10px;top:10px;background:#ff5a5a;color:#fff;font-weight:800;border-radius:999px;padding:2px 10px;font-size:14px}
 .pd-tabs{display:flex;gap:6px}.pd-tabs button{flex:1}
 .pd-tabs button.on{background:var(--signal);color:#111;border-color:var(--signal);font-weight:700}
 .planet-head{display:flex;gap:14px;align-items:center}
@@ -427,7 +432,7 @@ button.wk:hover svg{filter:drop-shadow(0 0 4px #fff)}
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='v1.9.1', MADE='2026.11', UPDATED='2026.11.23';
+const VERSION='v1.9.2', MADE='2026.11', UPDATED='2026.11.24';
 /* ===================== 게임 데이터 ===================== */
 const WORKERS = 12;
 const GOODS = ['E','F','crystal','pearl','chip','core'];
@@ -437,7 +442,7 @@ const G = {
   chip:{n:'전자 제품',i:'💻'}, core:{n:'냉각 코어',i:'❄️'}
 };
 const TYPES = {
-  volcano:{n:'볼카노',i:'🌋',desc:'지열 에너지가 솟아오르는 화산 행성',rate:{E:3,F:1},spec:'crystal'},
+  volcano:{n:'볼카노',i:'🌋',desc:'지열이 넘치는 화산 행성 · 땅은 비옥하지만 분화가 잦아 농사는 온실에서만 해요',rate:{E:3,F:1},spec:'crystal'},
   aqua:{n:'아쿠아',i:'🌊',desc:'끝없는 바다 농장을 가진 해양 행성',rate:{E:1,F:3},spec:'pearl'},
   terra:{n:'테라',i:'🌍',desc:'기술과 인프라가 가장 앞선 개척 본부',rate:{E:4,F:4},spec:'chip'},
   frost:{n:'프로스트',i:'🧊',desc:'춥고 척박한 얼음 행성',rate:{E:1,F:2},spec:'core'}
@@ -815,7 +820,7 @@ const BUILD_ART={
   frost:{pn:'태양광 발전소',fn:'지하 버섯 농장'}
 };
 const TRAITS={
-  volcano:{E:'🌋 화산 지열이 끓어올라 발전에 유리해요',F:'🌾 뜨거운 화산재 땅이라 작물을 키우기는 까다로워요'},
+  volcano:{E:'🌋 화산 지열이 끓어올라 발전에 유리해요',F:'🌾 화산재 땅은 비옥하지만, 분화가 잦아 온실 안에서만 조금씩 키울 수 있어요'},
   aqua:{E:'⚡ 바다 위라 큰 발전 시설을 세우기 까다로워요',F:'🌊 끝없는 바다 농장 덕분에 식량 생산에 유리해요'},
   terra:{E:'🏙️ 앞선 기술과 인프라로 발전이 잘 돼요',F:'🌱 기름진 땅과 수직 농장으로 식량도 넉넉해요'},
   frost:{E:'❄️ 혹한에 햇빛이 약해 발전이 특히 어려워요',F:'🍄 지하 버섯 농장 덕분에 식량은 그럭저럭 키울 수 있어요'}
@@ -1148,6 +1153,7 @@ function studentView(root,st,teamId,send){
       <div class="pd-dim" data-sec="pdim" data-act="portclose" hidden></div>
       <div class="port-drawer" data-sec="drawer" hidden role="dialog" aria-label="우주항 거래 창">
         <div class="row"><span style="font-size:28px">🚀</span><div class="grow"><h3>${TYPES[team.type].n} 우주항</h3><div class="small muted">통신센터 · 화물선 출항장</div></div><button data-act="portclose">닫기 ✕</button></div>
+        <div class="pd-hero c-${team.type}" data-phero></div>
         <div class="small" data-pinv style="background:#0b0f1d;border:1px solid var(--line);border-radius:10px;padding:6px 10px"></div>
         <div class="pd-tabs"><button data-act="ptab" data-k="in"></button><button data-act="ptab" data-k="send">🚀 제안 보내기</button></div>
         <div class="panel" data-sec="offers"></div>
@@ -1202,6 +1208,13 @@ function studentView(root,st,teamId,send){
   root.querySelector('[data-pcount]').textContent=post?'':inc?'· 받은 제안 '+inc:'';
   root.querySelector('[data-act="port"]').hidden=post;
   root.querySelector('.pd-tabs [data-k="in"]').textContent='📥 받은 제안 '+inc+' · 보낸 제안';
+  const ph=root.querySelector('[data-phero]');
+  if(ph){ const R2=ROUNDS[st.round]||{}, storm=!R2.trade, wl=wallHas(st.events,team.type), hsig=[storm,wl,st.events.pair,inc].join('|');
+    if(ph.dataset.sig!==hsig){ ph.dataset.sig=hsig; const im=IMG['port_'+team.type];
+      const other=wl?wallPair(st.events).find(k=>k!==team.type):null;
+      ph.innerHTML=`${im?`<img src="${im}" alt="${TYPES[team.type].n} 우주항">`:`<div style="font-size:90px">🚀</div>`}
+        ${storm?'<div class="ph-tag storm">🌀 워프 폭풍 · 통신 두절</div>':wl?`<div class="ph-tag wall">⛔ 무역 장벽 · ${josa(TYPES[other].n,'과','와')} 거래 금지</div>`:'<div class="ph-tag ok">📡 통신 정상 · 화물선 출항 가능</div>'}
+        ${inc&&!storm?`<span class="ph-badge">📥 ${inc}</span>`:''}`; } }
   root.querySelector('[data-pinv]').innerHTML='📦 우리 창고 · '+GOODS.map(k=>`${ic(k)}<b class="num">${team.inv[k]||0}</b>`).join(' &nbsp;')+` · 현재 점수 <b class="num" style="color:var(--signal)">${sc}</b>`;
   const rb=sec('recbox'); if(root._recMode!==post){ root._recMode=post; rb.open=post; }
   const rec=sec('rec'), rsig=JSON.stringify([st.phase,Object.keys(team.hist),teamTrades(st,team).length,team.members||'',team.built.length]);
